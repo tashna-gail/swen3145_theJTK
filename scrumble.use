@@ -1,17 +1,14 @@
 model scrumble --name of model
 
-enum PlayerStatus {Online, Offline, Away, Playing}
-enum ProfileState {Private, Public}
+enum PlayerStatus {ONLINE, OFFLINE, AWAY, PLAYING}
+enum ProfileState {PRIVATE, PUBLIC}
 enum MatchType {RANKED, UNRANKED}
-enum Category {animal, music, movies, food, books, countries, none}
+enum Category {ANIMAL, MUSIC, MOVIES, FOOD, BOOKS, COUNTRIES, NONE}
 enum PlayType {PLAY, PASS}
 enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED, LOST}
 enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
-
-
--- players in match must have status in game
 
 class Identifiable
 attributes
@@ -186,28 +183,23 @@ constraints
             r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
         )
 
-    -- #TODO
     -- Can only exchange match requests among friends
     --inv onlyFriendsExchangeMatchRequests:
-    --    let
-    --        fReqAccepted = sentReqs->select(req |
-    --            req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
-    --        acceptedFReq = rcvdReqs->select(req |
-    --            req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
-    --        friends = fReqAccepted->union(acceptedFReq)->asSet(),
-    --        rcvdMatchReqs = rcvdReqs->select(req | req.type = #MATCH),
-    --        validMatchReq = rcvdMatchReqs->select(mr |
-    --                friends->includes(mr.reqSender) and
-    --                mr.date.after(mr.reqSender.sentReqs->sel())
-    --            )
-    --    in rcvdMatchReqs->forAll(mr | req.reqSender)
+        let
+            frReqsAccepted = sentReqs->select(req |
+                req.type = #FRIEND and req.status = #ACCEPTED),
+            acceptedFrReqs = rcvdReqs->select(req |
+                req.type = #FRIEND and req.status = #ACCEPTED),
+            rcvdMatchReqs = rcvdReqs->select(req | req.type = #MATCH),
+            validMatchReq = rcvdMatchReqs->select(mr |
+                    (frReqsAccepted.reqRcvr->includes(mr.reqSender) and
+                    mr.date.after(frReqsAccepted.select(fr | fr.reqRcvr = mr.reqSender).date)) or
+                    (frReqsAccepted.reqSender->includes(mr.reqSender) and
+                    mr.date.after(frReqsAccepted.select(fr | fr.reqSender = mr.reqSender).date))
+                )
+        in rcvdMatchReqs->forAll(mr | validMatchReq->includes(req.reqSender))
 
-    -- The association between Player and Match would basically create
-    -- an attribute in player named the role name match has (matchHistory)
-    -- and would be an array of matches and in the match class there's be
-    -- an attribute named as the player's role (players) that's an array
-    -- [of 2] players
-
+    -- #TODO
     -- Can only chat if one player has accepted a message or friend request
     -- from the other player
     --inv onlyChatIfRequestAccepted:
@@ -223,9 +215,21 @@ constraints
     --    in senderFriends->includes(msgRcvr) or 
     --        rcvrFriends->includes(msgSender)
 
+    -- players in match must have status in game
+    inv playerStatusConsistent:
+        matchHistory->select(m | m.status = #INPROGRESS)->size() > 0 implies
+        status = #Playing
+
     -- Can't play more than one match at a time
     inv onlyPlayingOneOrNoMatches:
         matchHistory->select(m | m.status = #INPROGRESS)->size() <= 1
+
+    -- Ensure correct rankings are always assigned
+    inv rankIsCorrect:
+        Players.allInstances->forAll(p | p <> self implies (
+            (p.placement > placement implies p.score > score) and
+            (p.placement = placement implies p.score = score) and
+            (p.placement < placement implies p.score < score)))
 end -- Player
 
 class Message < Identifiable
@@ -382,6 +386,7 @@ constraints
     inv passedPlayHasNoTiles: type = #PASS implies tiles->isEmpty()
 
     /*
+    -- #TODO
     -- Only valid words may be spelt
     inv allWordsSpeltAreValidAndOnlySpeltWordsAreLinked:
         if type = #PLAY then
@@ -751,10 +756,6 @@ between
     Player[*] role players ordered
 attributes
     placement: Integer
-constraints
-    -- #TODO
-    -- Ensure correct rankings are always assigned
-    -- incv :
 end -- Rank
 
 ---------------Associations---------------
