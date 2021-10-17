@@ -27,10 +27,120 @@ attributes
     month: Integer init: 1
     year: Integer init: 1900
 operations
-    before(d: Date): Boolean
-    equals(d: Date): Boolean
-    after(d: Date): Boolean
-    valid(d: Integer, m: Integer, y: Integer): Boolean
+    initialise(d: Integer, m: Integer, y: Integer)
+    begin
+        self.day := d;
+        self.month := m;
+        self.year := y;
+    end
+
+    pre parametersHaveValidValues: isValid(d, m, y)
+    post attributesCorrectlyUpdated: 
+        day = d and month = m and year = y
+
+    -- Accessors
+    getDay(): Integer = day
+    getMonth(): Integer = month
+    getYear(): Integer = year
+
+    -- Mutators
+    setDay(d: Integer)
+    begin self.day := d; end
+    pre newDateIsValid: isValid(d, month, year)
+    post dayCorrectlyUpdated: day = d
+
+    setMonth(m: Integer)
+    begin self.month := m; end
+    pre newDateIsValid: isValid(day, m, year)
+    post monthCorrectlyUpdated: month = m
+
+    setYear(y: Integer)
+    begin self.year := y; end
+    pre newDateIsValid: isValid(day, month, y)
+    post yearCorrectlyUpdated: year = y
+
+    -- returns true if all the attributes are not null, false otherwise
+    isInitialised(): Boolean = day <> null and month <> null and
+        year <> null
+    post returnValueIsAccurate:
+        result = Set{day <> null, month <> null, year <> null}->forAll(t | t = true)
+
+    -- returns true if self is before d, false otherwise
+    before(d: Date): Boolean = ((year < d.year) or
+        (year = d.year and month < d.month) or
+        (year = d.year and month = d.month and day < d.day))
+    pre bothAreInitialised: isInitialised() and d.isInitialised()
+    pre bothAreValid: isValid(day, month, year) and
+        isValid(d.day, d.month, d.year)
+    post returnValueIsAccurate:
+        result = ((year < d.year) or
+            (year = d.year and month < d.month) or
+            (year = d.year and month = d.month and day < d.day)) = true
+
+    -- returns true if self has the same values as d, false otherwise
+    equals(d: Date): Boolean = day = d.day and month = d.month and
+        year = d.year
+    pre bothAreInitialised: isInitialised() and d.isInitialised()
+    pre bothAreValid: isValid(day, month, year) and
+        isValid(d.day, d.month, d.year)
+    post returnValueConditions:
+        result = Set{day = d.day, month = d.month, year = d.year}->forAll(t | t = true)
+
+    -- returns true if self is after d, false otherwise
+    after(d: Date): Boolean = (not equals(d)) and (not before(d))
+    pre bothAreInitialised: isInitialised() and d.isInitialised()
+    pre bothAreValid: isValid(day, month, year) and
+        isValid(d.day, d.month, d.year)
+    post returnValueIsAccurate:
+        result = Set{not equals(d), not before(d)}->forAll(t | t = true)
+
+    -- returns true if y is a leap year, false otherwise
+    isLeapYear(y: Integer): Boolean = 
+        if (y.mod(400) = 0 or (y.mod(100) > 0 and y.mod(4) = 0)) then
+                true
+            else
+                false
+            endif
+    pre yearIsValid: y <> null and y > 1900
+    post returnValueIsAccurate: result = (y.mod(400) = 0 or
+        (y.mod(100) > 0 and y.mod(4) = 0)) = true
+
+    dayValid(v: Integer): Boolean = v >= 1 and v <= 31
+    pre paramaterNotNull: v <> null
+    post returnValueIsAccurate: result = v >= 1 and v <= 31
+
+    monthValid(v: Integer): Boolean = v >= 1 and v <= 12
+    pre paramaterNotNull: v <> null
+    post returnValueIsAccurate: result = v >= 1 and v <= 12
+
+    yearValid(v: Integer): Boolean = v > 1900
+    pre paramaterNotNull: v <> null
+    post returnValueIsAccurate: result = v > 1900
+
+    dayAndMonthValid(d: Integer, m: Integer): Boolean =
+        (Set{4, 6, 9, 11}->includes(m) implies d <= 30) and
+        (Set{1, 3, 5, 7, 8, 10, 12}->includes(m) implies d <= 31)
+    pre dayIsValid: dayValid(d)
+    pre monthIsValid: monthValid(m)
+    post returnValueIsAccurate: result =
+        (Set{4, 6, 9, 11}->includes(m) implies d < 31) and
+        (Set{1, 3, 5, 7, 8, 10, 12}->includes(m) implies d < 32)
+
+    febValid(d: Integer, y: Integer): Boolean =
+        (isLeapYear(y) implies d <= 29) and 
+        (not isLeapYear(y) implies d <= 28)
+    pre dayIsValid: dayValid(d)
+    pre yearIsValid: yearValid(y)
+    post returnValueIsAccurate: result =
+        (isLeapYear(y) implies d <= 29) and 
+        (not isLeapYear(y) implies d <= 28)
+
+    isValid(d: Integer, m: Integer, y: Integer): Boolean =
+        dayValid(d) and monthValid(m) and yearValid(y) and
+        dayAndMonthValid(d, m) and (m = 2 implies febValid(d, y))
+
+constraints
+    inv dateIsValid: isValid(day, month, year)
 end -- Date
 
 class Player < Identifiable
@@ -96,9 +206,24 @@ constraints
     -- an attribute named as the player's role (players) that's an array
     -- [of 2] players
 
+    -- Can only chat if one player has accepted a message or friend request
+    -- from the other player
+    --inv onlyChatIfRequestAccepted:
+    --    let
+    --        senderFriends = msgSender.sentReqs->select(r |
+    --            r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
+    --                msgSender.rcvdReqs->select(r |
+    --                    r.type = #FRIEND and r.status = #ACCEPTED).reqSender),
+    --        rcvrFriends = msgRcvr.sentReqs->select(r |
+    --            r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
+    --                msgRcvr.rcvdReqs->select(r |
+    --                    r.type = #FRIEND and r.status = #ACCEPTED).reqSender)
+    --    in senderFriends->includes(msgRcvr) or 
+    --        rcvrFriends->includes(msgSender)
+
     -- Can't play more than one match at a time
     inv onlyPlayingOneOrNoMatches:
-        matchHistory->select(m | m.status = #INPROGRESS)->count() <= 1
+        matchHistory->select(m | m.status = #INPROGRESS)->size() <= 1
 end -- Player
 
 class Message < Identifiable
@@ -109,22 +234,6 @@ end -- Message
 
 class Chat
 constraints
-    -- Can only chat if one player has accepted a message or friend request
-    -- chatSenderSentRequest && chatRcvrAcceptedRequest ||
-    -- chatRcvrSentRequest && chatSenderAcceptedRequest
-    inv onlyChatIfRequestAccepted:
-        let
-            senderFriends = chatMsgSender.sentReqs->select(r |
-                r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
-                    chatMsgSender.rcvdReqs->select(r |
-                        r.type = #FRIEND and r.status = #ACCEPTED).reqSender),
-            rcvrFriends = chatMsgRcvr.sentReqs->select(r |
-                r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
-                    chatMsgRcvr.rcvdReqs->select(r |
-                        r.type = #FRIEND and r.status = #ACCEPTED).reqSender)
-        in senderFriends->includes(chatMsgRcvr) or 
-            rcvrFriends->includes(chatMsgSender)
-
     -- Chats can only have 2 participants
     inv onlyTwoParticipants:
         let
@@ -137,9 +246,9 @@ constraints
     inv messagesAreOrdered: messages->forAll(m |
         let
             i = messages->indexOf(m),
-            followingMsgs = messages->subOrderedSet(i + 1)
-        in messages->last() <> m implies
-            followingMsgs->forAll(nextM | nextM.date.after(m.date)))
+            previousMsgs = messages->subOrderedSet(0, i)
+        in messages->first() <> m implies
+            previousMsgs->forAll(prevM | prevM.date.before(m.date)))
 end -- Chat
 
 class Request < Identifiable
@@ -179,8 +288,8 @@ constraints
         let
             frAndMsgReqs = Request.allInstances->select(req |
                 Set{#FRIEND, #MESSAGE}->includes(req.type)),
-            pending = frAndMsgReqs->select(req | req.state = #PENDING),
-            accepted = frAndMsgReqs->select(req | req.state = #ACCEPTED)
+            pending = frAndMsgReqs->select(req | req.status = #PENDING),
+            accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
         in pending->forAll(p | accepted->forAll(a | 
             p.reqSender <> a.reqSender or p.reqRcvr <> a.reqRcvr))
 end -- Request
@@ -192,19 +301,19 @@ attributes
 constraints
     -- All message requests have the type #MESSAGE
     inv messageReqTypeIsMsgReq:
-        MessageRequest.allInstances->forAll(mr | mr.type = #MESSAGE)
+        MatchRequest.allInstances->forAll(mr | mr.type = #MESSAGE)
 
     -- Only accepted match requests may refer to a match
     inv noMatchUnlessAccepted:
-        MessageRequest.allInstances->forAll(mr |
+        MatchRequest.allInstances->forAll(mr |
             (mr.status = #ACCEPTED implies mr.match->size() = 1) and
             (mr.status <> #ACCEPTED implies mr.match->size() = 0))
 
     -- Accepted match type must match requested match type
     inv matchTypeMatchesRequestedMatchType:
-        MessageRequest.allInstances->forAll(mr |
+        MatchRequest.allInstances->forAll(mr |
             mr.status = #ACCEPTED implies
-                (mr.matchType = mr.match.type) and mr.timed and mr.match.timed
+                (mr.matchType = mr.match.matchType) and mr.timed and mr.match.timed
         )
 
     -- Only unranked matches may be untimed
@@ -225,8 +334,11 @@ end -- Block
 associationclass Rack
 between
     Player[2] role players
-    Match[*]
+    Match[*] role matchHistory
 end -- Rack
+
+-- maybe add a turn attribute so we can track the order better.
+-- They're already ordered though so idk. Not a priority anyways
 
 class Play < Identifiable
 attributes
@@ -236,7 +348,7 @@ attributes
     endRow: Integer
     endCol: Integer
     score: Integer --/score: Integer
-    time: Integer -- Time in seconds
+    time: Integer -- Time in seconds between match start and this play
     bonusApplied: Boolean
 constraints
     -- Plays can only go in one direction
@@ -263,14 +375,6 @@ constraints
                 Set{startRow - 1, endRow + 1}->includes(s.row))
             ).tile->notEmpty()
         )
-
-    -- Tiles must be ordered
-    inv tilesAreOrdered: tiles->forAll(t |
-        let
-            i = tiles->indexOf(t),
-            followingTiles = tiles->subOrderedSet(i + 1)
-        in tiles->last() <> t implies
-            followingTiles->forAll(nextT | nextT.date.after(t.date)))
 
     -- Passed plays cant have any tiles
     inv passedPlayHasNoTiles: type = #PASS implies tiles->isEmpty()
@@ -472,7 +576,7 @@ end -- Slot
 
 class Tile
 attributes
-    score: Integer
+    points: Integer
 constraints
     -- Ensure Tiles have a valid point value
     inv validPoints: points > 0 and points <= 10
@@ -502,9 +606,9 @@ constraints
             if w1 <> w2 then
                 let
                     word1 = w1.letters->iterate(l; word:String = '' |
-                        word->concat(l.letter)),
+                        word.concat(l.letter)),
                     word2 = w2.letters->iterate(l; word:String = '' |
-                        word->concat(l.letter))
+                        word.concat(l.letter))
                 in not word1.equalsIgnoreCase(word2)
             else true endif
         )
@@ -520,28 +624,29 @@ class Match < Identifiable
 attributes
     matchType: MatchType
     timed: Boolean
+    time: Integer -- Elapsed seconds
     date: Date
     category: Category
-    matchStatus: MatchStatus
+    status: MatchStatus
 constraints
     -- Only unranked matches may be untimed
     inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
 
     -- Plays must be ordered
-    inv playsAreOrdered: plays->forAll(p |
+    inv playsAreOrdered: playHistory->forAll(p |
         let
-            i = plays->indexOf(p),
-            followingPlays = plays->subOrderedSet(i + 1)
-        in plays->last() <> p implies
-            followingPlays->forAll(nextP | nextP.date.after(p.date)))
+            i = playHistory->indexOf(p),
+            previousPlays = playHistory->subOrderedSet(0, i)
+        in playHistory->first() <> p implies
+            previousPlays->forAll(prevP | prevP.time < p.time))
 
     -- Plays must alternate between players, ie the game should be turn based
     inv playsAlternateBetweenPlayers:
         let
-            player1 = plays->at(0).rack.players,
-            player2 = plays->at(1).rack.players
-        in plays->iterate(p; result:Boolean = true |
-                if plays->indexOf(p).mod(2) = 0 then
+            player1 = playHistory->at(0).rack.players,
+            player2 = playHistory->at(1).rack.players
+        in playHistory->iterate(p; result:Boolean = true |
+                if playHistory->indexOf(p).mod(2) = 0 then
                     result = result and (player1 = p)
                 else
                     result = result and (player2 = p)
@@ -553,7 +658,7 @@ constraints
         let
             bagTiles = board.letterBag.tiles,
             rackTiles = rack.tiles,
-            boardTiles = board.slot.tile,
+            boardTiles = board.slots.tile,
             allTiles = bagTiles->union(rackTiles->union(boardTiles))
         in allTiles->forAll(t1, t2|
             t1.letter.letter = t2.letter.letter implies t1.points = t2.points)
@@ -561,62 +666,62 @@ constraints
     -- must be a fixed set of tiles in circulation for a given match
     inv fixedNumberOfLettersInMatch:
         let
-            bagTiles = board.letterBag.tiles,
-            rackTiles = rack.tiles,
-            boardTiles = board.slot.tile,
-            allTiles = bagTiles->union(rackTiles->union(boardTiles)),
+            bagLetters = board.letterBag.tiles.letter,
+            rackLetters = rack.tiles.letter,
+            boardLetters = board.slots.tile.letter,
+            allTiles = bagLetters->union(rackLetters->union(boardLetters)),
             a = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('A') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('A') then cnt + 1 else cnt endif),
             b = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('B') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('B') then cnt + 1 else cnt endif),
             c = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('C') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('C') then cnt + 1 else cnt endif),
             d = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('D') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('D') then cnt + 1 else cnt endif),
             e = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('E') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('E') then cnt + 1 else cnt endif),
             f = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('F') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('F') then cnt + 1 else cnt endif),
             g = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('G') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('G') then cnt + 1 else cnt endif),
             h = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('H') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('H') then cnt + 1 else cnt endif),
             i = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('I') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('I') then cnt + 1 else cnt endif),
             j = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('J') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('J') then cnt + 1 else cnt endif),
             k = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('K') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('K') then cnt + 1 else cnt endif),
             l = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('L') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('L') then cnt + 1 else cnt endif),
             m = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('M') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('M') then cnt + 1 else cnt endif),
             n = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('N') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('N') then cnt + 1 else cnt endif),
             o = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('O') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('O') then cnt + 1 else cnt endif),
             p = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('P') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('P') then cnt + 1 else cnt endif),
             q = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('Q') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('Q') then cnt + 1 else cnt endif),
             r = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('R') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('R') then cnt + 1 else cnt endif),
             s = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('S') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('S') then cnt + 1 else cnt endif),
             t = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('T') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('T') then cnt + 1 else cnt endif),
             u = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('U') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('U') then cnt + 1 else cnt endif),
             v = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('V') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('V') then cnt + 1 else cnt endif),
             w = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('W') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('W') then cnt + 1 else cnt endif),
             x = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('X') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('X') then cnt + 1 else cnt endif),
             y = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('Y') then cnt = cnt + 1 else cnt = cnt endif),
+                if char.letter.equalsIgnoreCase('Y') then cnt + 1 else cnt endif),
             z = allTiles->iterate(char; cnt:Integer = 0 |
-                if char.letter.equalsIgnoreCase('Z') then cnt = cnt + 1 else cnt = cnt endif)
+                if char.letter.equalsIgnoreCase('Z') then cnt + 1 else cnt endif)
         in (a = 9 and b = 2 and c = 2 and d = 4 and e = 12 and f = 2 and
             g = 3 and h = 2 and i = 9 and j = 1 and k = 1 and l = 4 and
             m = 2 and n = 6 and o = 8 and p = 2 and q = 1 and r = 6 and
@@ -625,7 +730,7 @@ constraints
 
     -- Players must be similar rank
     inv similarRank:
-        players.leaderboard.Rank->forAll(p1, p2 |
+        players.Rank->forAll(p1, p2 |
             type = #RANKED implies (p1.placement - p2.placement).abs() <= 100 and
             type <> #RANKED implies (p1.placement - p2.placement).abs() <= 200)
 end -- Match
@@ -652,7 +757,7 @@ end -- Rank
 
 composition PlayerChat between
     Chat[1] role chat
-    Message[*] role msgs ordered
+    Message[*] role messages ordered
 end
 
 association ChatRooms between
@@ -714,7 +819,7 @@ end
 
 aggregation Stock between
     LetterBag[1]
-    Tile[*]
+    Tile[*] role tiles
 end
 
 association WordCheck between
