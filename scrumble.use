@@ -1,0 +1,443 @@
+model scrumble //name of model
+
+class Identifiable
+attributes
+    id: String
+constraints
+end --Identifiable
+
+--from Class
+class Date
+attributes
+    day: Integer init: 1
+    month: Integer init: 1
+    year: Integer init: 1900
+    before(d: Date): Boolean
+    equals(d: Date): Boolean
+    after(d: Date): Boolean
+    valid(d: Integer, m: Integer, y: Integer): Boolean
+end --Date
+
+class Player < Identifiable
+attributes
+    name: String
+    email: String
+    dob: Date
+    score: Integer derived
+    status: PlayerStatus
+    state: ProfileState
+constraints
+    -- Blocked players can't be your friends
+    inv notFriendAndBlocked:
+        let
+            fReqAccepted = sentReqs->select(req |
+                req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
+            acceptedFReq = rcvdReqs->select(req |
+                req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
+            friends = fReqAccepted->union(acceptedFReq)
+        in friends->excludesAll(blocked)
+
+    -- Cannot send requests to yourself
+    inv noSelfRequests: sentReqs.reqRcvr->excludes(self)
+
+    -- Can't receive requests from blocked players
+    inv notReceiveRequestsFromBlocked:
+        let
+            blocks = Block->select(b | b.status = #Blocked)
+        in blocks->forAll(b |
+            let
+                requests = rcvdReqs->select(r |
+                    r.sentDate.after(b.date) and r.reqSender = b.blocked)
+            in requests->forAll(req | req.status = #LOST)
+        )
+
+    -- Can't send requests to blocked players
+    inv notSendRequestsToBlocked:
+        let
+            blocks = Block->select(b | b.status = #Blocked)
+        in blocks->forAll(b | sentReqs->select(r |
+            r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
+        )
+
+    -- #TODO
+    -- Can only exchange match requests among friends
+    --inv onlyFriendsExchangeMatchRequests:
+    --    let
+    --        fReqAccepted = sentReqs->select(req |
+    --            req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
+    --        acceptedFReq = rcvdReqs->select(req |
+    --            req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
+    --        friends = fReqAccepted->union(acceptedFReq)->asSet(),
+    --        rcvdMatchReqs = rcvdReqs->select(req | req.type = #MATCH),
+    --        validMatchReq = rcvdMatchReqs->select(mr |
+    --                friends->includes(mr.reqSender) and
+    --                mr.date.after(mr.reqSender.sentReqs->sel())
+    --            )
+    --    in rcvdMatchReqs->forAll(mr | req.reqSender)
+
+    -- The association between Player and Match would basically create
+    -- an attribute in player named the role name match has (matchHistory)
+    -- and would be an array of matches and in the match class there's be
+    -- an attribute named as the player's role (players) that's an array
+    -- [of 2] players
+
+    -- Can't play more than one match at a time
+    inv onlyPlayingOneOrNoMatches:
+        matchHistory->select(m | m.status = #INPROGRESS)->count() <= 1
+end --Player
+
+class Message
+attributes
+    message: String
+    date: Date --should be time
+end --Message
+
+class Chat
+attributes
+constraints
+    -- Can only chat if one player has accepted a message or friend request
+    -- chatSenderSentRequest && chatRcvrAcceptedRequest ||
+    -- chatRcvrSentRequest && chatSenderAcceptedRequest
+    -->inv onlyChatIfRequestAccepted:
+    --    let
+    --        senderFriends = chatMsgSender.sentReqs->forAll(r |
+    --            r.type = #FRIEND and r.status = #ACCEPTED)->union(
+    --                chatMsgSender.rcvdReqs->forAll(r |
+    --                    r.type = #FRIEND and r.status = #ACCEPTED)),
+    --        rcvrFriends = chatMsgRcvr.sentReqs->forAll(r |
+    --            r.type = #FRIEND and r.status = #ACCEPTED)->union(
+    --                chatMsgRcvr.rcvdReqs->forAll(r |
+    --                    r.type = #FRIEND and r.status = #ACCEPTED)),
+    --    in senderFriends->includes(chatMsgRcvr) or
+    --        rcvrFriends->includes(chatMsgSender)
+
+    -- Chats can only have 2 participants
+    inv onlyTwoParticipants:
+        let
+            senders = messages.msgSender->asSet(),
+            recipients = messages.msgRcvr->asSet()
+        in participants->includesAll(senders) and 
+            participants->includesAll(recipients)
+
+    -- Messages must be ordered
+    inv messagesAreOrdered: messages->forAll(m |
+        let
+            i = messages->indexOf(m),
+            followingMsgs = messages->subOrderedSet(i + 1)
+        in messages->last() <> m implies
+            followingMsgs->forAll(nextM | nextM.date.after(m.date)))
+end --Chat
+
+-- Intentionally misplaced to serve as a reminder to add it
+association Participants between
+    Player[2] role participants
+    Chat[*] role chats
+end
+
+class Request < Identifiable
+attributes
+    status: RequestStatus --= #PENDING
+    sentDate: Date
+    type: RequestType
+constraints
+end --Request
+
+
+
+associationclass Block
+between
+    Player[*] role player
+    Player[*] role blocked
+attributes
+    date: Date
+    status: BlockStatus
+end
+
+--game
+
+class Play < Identifiable
+attributes
+    type: PlayType
+    startRow: Integer
+    startCol: Integer
+    endRow: Integer
+    endCol: Integer
+    score: Integer --/score: Integer
+    time: Integer -- Time in seconds
+    bonusApplied: Boolean
+constraints
+    inv uniqueIDs: Identifiable.allInstances->forAll(
+            i, j | i <> j implies i.id <> j.id)
+end --Play
+
+class Board
+attributes
+    row: Integer
+    column: Integer
+operations 
+constraints
+    -- should row and col be in attributes, i put it there Kayvia
+    inv boardSizeIsValid: row > 0 and row <= 15 and column > 0 and column <= 15 
+end --Board
+
+class Slot
+attributes
+    row: Integer
+    column: Integer
+end --Slot
+
+class Tile
+attributes
+    --letter: String
+    --score: Integer
+end --Tile
+
+class Letter
+attributes
+    letter: String
+constraints
+    -- Ensure that the letter is valid
+    inv validLetter: Set{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+        'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+        'X', 'Y', 'Z'
+    }->includes(letter)
+end --Letter
+
+class LetterBag
+attributes
+end --LetterBag
+
+class Word
+attributes
+    String: Word
+    category:  Category
+end
+
+--class Rack
+--attributes
+----end -- Rack
+associationclass Rack
+between
+    Player[*]
+    Match[*]
+attributes
+end
+
+
+class Dictionary
+attributes
+constraints
+end -- Dictionary
+
+class Match < Identifiable
+attributes
+    matchType: MatchType
+    timed: Boolean
+    date: Date
+    category: Category
+    matchStatus: MatchStatus
+constraints
+    -- Only unranked matches may be untimed
+    inv noUntimedRankedMatchRequests: 
+        (matchType = #RANKED) implies timed
+    
+    --Can't play more than one match at a time
+    --inv onlyPlayingOneOrNoMatches: Player.allInstances->forAll
+    --    (p | p.matchHistory ->(m | m.status = #INPROGRESS).size() <= 1)
+
+    --inv onlyPlayingOneOrNoMatches:
+        --matchHistory->count(m | m.matchStatus = #INPROGRESS) <= 1
+    --    MatchHistory->select(m | m.matchStatus = #INPROGRESS)->count() <= 1
+        
+    --> #TODO
+    -- Plays must alternate between players, ie the game should be turn based
+    --inv :
+
+    --> Ensure all Tiles with the same letter have the same score
+    --inv consistentTilePointValues:
+    --    let
+    --        bagTiles = board.letterBag.tiles
+    --        rackTiles = rack.tiles
+    --        boardTiles = board.slot.tile
+    --        allTiles = bagTiles->union(rackTiles->union(boardTiles))
+    --    in allTiles->forAll(t1, t2|
+    --        if t1.letter = t2.letter then t1.points = t2.points endif)
+
+    --Players must be similar rank
+    --inv similarRank:
+    --    let
+    --        playerRanks = LeaderBoard--player.leaderboard.Rank,
+    --    in playerRanks->forAll(p1, p2 |
+    --        if type = #RANKED then
+    --            (p1.placement - p2.placement) <= 100
+    --        else
+    --            (p1.placement - p2.placement) <= 200)
+
+end -- Match
+
+class MatchRequest < Request
+attributes
+    matchType: MatchType
+    timed: Boolean
+end --MatchRequest
+
+class LeaderBoard
+attributes
+end --Leaderboard
+
+associationclass Rank
+between
+    LeaderBoard[1]
+    Player[*] role ranks ordered
+attributes
+    placement: Integer
+end --Rank
+
+--Game
+
+enum PlayerStatus {Online, Offline, Away, Playing}
+enum ProfileState {Private, Public}
+enum MatchType {RANKED, UNRANKED}
+enum Category {animal, music, movies, food, books, countries, none}
+enum PlayType {PLAY, PASS}
+enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED}
+enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
+enum RequestType {FRIEND, MESSAGE, MATCH}
+enum BlockStatus {TRUE, FALSE}
+
+
+--Associations
+association ChatRooms between
+    Chat[0..*] role chatRooms
+    Player[2] role players     
+end
+
+
+composition GameBoard between
+    Board[1]
+    Slot[*]     
+end
+
+aggregation MatchLetterBag between
+    LetterBag[1]
+    Tile[*]    
+end
+
+association Words between
+    Word[*]
+    Match[*]
+end
+
+association SentRequest between
+    Player[1] role reqSender
+    Request[*] role sentReqs
+end
+
+association RecievedRequest between
+    Player[1] role reqRcvr
+    Request[*] role rcvdReqs
+end
+
+association SentMessage between
+    Player[1] role msgSender
+    Message[*] role sentMsgs
+end
+
+association RecievedMessage between
+    Player[1] role msgRcvr
+    Message[*] role rcvdMsgs
+end
+
+association RequestMatch between
+    MatchRequest[1] role matchReq
+    Match[0..1] role match
+end
+
+composition PlayerChat between
+    Chat[1] role chat
+    Message[*] role msgs ordered
+end
+
+association Observes between
+    LeaderBoard[1] role observer
+    Match[*] role watches
+end
+
+association Plays between
+    Match[1] role match
+    Play[*] role playHistory ordered
+end
+
+aggregation BoardSlots between
+    Slot[1] role slot
+    Tile[0..1] role tile
+end
+
+aggregation RackPlace between 
+    Rack[1] role rack
+    Tile[0..9] role plays2
+end
+
+--aggregation Holds3 between --change name
+--   LetterBag[1] role bag
+--   Tile[*] role tiles
+--end
+
+association Played between
+    Rack[1] role rack
+    Play[*] role plays
+end
+
+association Spelt between
+    Play[*] role plays
+    Word[*] role words
+end
+
+association Uses between
+    Play[1] role play
+    Tile[0..9] role tiles ordered
+end
+
+association Spelling between
+    Word[*] role words
+    Letter[*] role letters ordered
+end
+
+association Marked between
+    Tile[*] role tiles
+    Letter[1] role letter
+end
+
+association MatchGameBoard between
+   Match[1] role match
+   Board[1] role board
+end
+
+association WordCheck between
+    Match[*] role match
+    Dictionary[1] role dictionary
+end
+
+--association unknown3 between
+--    Board[1]
+--    Match[1]
+--end
+--composition unnamed3 between
+--   Board[1] role board
+--    Slot[*] role slot
+--end
+
+association LetterOptions between
+    LetterBag[1] 
+    Board[1]
+end
+
+association ValidWord between
+    Dictionary[1] role dictionary
+    Word[*] role words
+end
+
+--association unnamed4 between
+--    Board[1] role board
+--    LetterBag[1] role bag
+--end

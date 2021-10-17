@@ -1,0 +1,156 @@
+reset
+
+------------Adding Objects------------
+
+!create scrs: SCRS
+
+!create d1: Date
+!set d1.year := 2020
+
+!create d2: Date
+!set d2.day := 11
+!set d2.month := 12
+!set d2.year := 2020
+
+!create d3: Date
+!set d3.day := 2
+!set d3.month := 3
+!set d3.year := 1985
+
+!create d4: Date
+!set d4.day := 31
+!set d4.month := 12
+!set d4.year := 1970
+
+!create d5: Date
+!set d5.day := 11
+!set d5.month := 11
+!set d5.year := 1980
+
+!create d6: Date
+!set d6.day := 27
+!set d6.month := 8
+!set d6.year := 2017
+
+!create d7: Date
+!set d7.day := 21
+!set d7.month := 12
+!set d7.year := 2017
+
+!create d8: Date
+!set d8.day := 29
+!set d8.month := 8
+!set d8.year := 2021
+
+!create d9: Date
+!set d9.day := 22
+!set d9.month := 12
+!set d9.year := 2021
+
+
+
+!create s1: Semester
+!set s1.identifier := 's1'
+!set s1.startOn := d6
+!set s1.endOn := d7
+!set s1.status := SemesterStatus::Open
+
+!create s2: Semester
+!set s2.identifier := 's2'
+!set s2.startOn := d8
+!set s2.endOn := d9
+
+
+
+!create c1: Course
+!set c1.identifier := 'c1'
+!set c1.name := 'COMP2140'
+!set c1.description := 'Software Engineering'
+
+!create c2: Course
+!set c2.identifier := 'c2'
+!set c2.name := 'COMP2171'
+!set c2.description := 'Object Technology'
+
+!create c3: Course
+!set c3.identifier := 'c3'
+!set c3.name := 'SWEN3145'
+!set c3.description := 'Software Modeling'
+
+!create c4: Course
+!set c4.identifier := 'c4'
+!set c4.name := 'COMP2201'
+!set c4.description := 'Discrete Mathematics'
+
+!create c5: Course
+!set c5.identifier := 'c5'
+!set c5.name := 'SWEN3185'
+!set c5.description := 'Formal Methods and Software Reliability'
+
+
+
+!create fac1: Faculty
+!set fac1.identifier := 'fst'
+!set fac1.name := 'Faculty of Science and Technology'
+
+
+
+!create st1: Student
+!set st1.identifier := '770002996'
+!set st1.name := 'Stuart Little'
+!set st1.dob := d3
+!set st1.sex := Sex::Male
+!set st1.status := Status::PartTime
+
+!create st2: Student
+!set st2.identifier := '770002990'
+!set st2.name := 'Chantelle Big'
+!set st2.dob := d4
+!set st2.sex := Sex::Female
+!set st2.status := Status::FullTime
+
+!create st3: Student
+!set st3.identifier := '770002859'
+!set st3.name := 'Howard Megamum'
+!set st3.dob := d5
+!set st3.sex := Sex::Male
+!set st3.status := Status::FullTime
+
+----------Adding Associations---------
+
+!insert (scrs, fac1) into Faculties
+
+!insert (c1, c3) into Prerequisite
+!insert (c2, c3) into Prerequisite
+!insert (c4, c5) into Prerequisite
+
+!insert (c1, fac1) into OfferedIn
+!insert (c2, fac1) into OfferedIn
+!insert (c3, fac1) into OfferedIn
+!insert (c4, fac1) into OfferedIn
+!insert (c5, fac1) into OfferedIn
+
+!insert (st1, fac1) into FacultyAssignment
+!insert (st2, fac1) into FacultyAssignment
+!insert (st3, fac1) into FacultyAssignment
+
+!insert (s1, scrs) into Semesters
+!insert (s2, scrs) into Semesters
+
+------Adding Association Classes------
+
+!create co1: CourseOffering between (s1, c1)
+!create co2: CourseOffering between (s1, c2)
+!create co3: CourseOffering between (s1, c3)
+!create co4: CourseOffering between (s2, c4)
+!create co5: CourseOffering between (s2, c5)
+
+!create reg1: Registration between (st3, co1)
+!create reg2: Registration between (st3, co2)
+!create reg3: Registration between (st3, co3)
+!create reg4: Registration between (st2, co1)
+!create reg5: Registration between (st2, co4)
+!create reg6: Registration between (st1, co1)
+!create reg7: Registration between (st1, co2)
+
+check
