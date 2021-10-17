@@ -11,6 +11,8 @@ enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
 
 
+-- players in match must have status in game
+
 class Identifiable
 attributes
     id: String
@@ -564,8 +566,6 @@ end -- Play
 
 class Board
 attributes
-    row: Integer
-    column: Integer
 constraints
     -- Must have 15 by 15 slots
     inv boardSizeIsValid: slots->forAll(s |

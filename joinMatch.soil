@@ -124,10 +124,6 @@
 !insert (m1,b1) into MatchGameBoard
 !new Board('b2')
 !insert (m2,b2) into MatchGameBoard
-!b1.row := 10
-!b1.column := 10
-!b2.row := 10
-!b2.column := 10
 !new LetterBag('lb1')
 !new LetterBag('lb2')
 !insert (lb2,b2) into LetterOptions
@@ -146,3 +142,5 @@
 !insert (l2,p4) into Rank
 !destroy r2
 !destroy r1
+
+check
