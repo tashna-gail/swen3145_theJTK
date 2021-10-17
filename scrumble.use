@@ -1,10 +1,24 @@
-model scrumble //name of model
+model scrumble --name of model
+
+enum PlayerStatus {Online, Offline, Away, Playing}
+enum ProfileState {Private, Public}
+enum MatchType {RANKED, UNRANKED}
+enum Category {animal, music, movies, food, books, countries, none}
+enum PlayType {PLAY, PASS}
+enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED}
+enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
+enum RequestType {FRIEND, MESSAGE, MATCH}
+enum BlockStatus {TRUE, FALSE}
+
 
 class Identifiable
 attributes
     id: String
 constraints
-end --Identifiable
+    -- Each item has a unique id
+    inv uniqueIDs: Identifiable.allInstances->forAll(i1, i2 |
+        i1 <> i2 implies i1.id <> i2.id)
+end -- Identifiable
 
 --from Class
 class Date
@@ -12,18 +26,19 @@ attributes
     day: Integer init: 1
     month: Integer init: 1
     year: Integer init: 1900
+operations
     before(d: Date): Boolean
     equals(d: Date): Boolean
     after(d: Date): Boolean
     valid(d: Integer, m: Integer, y: Integer): Boolean
-end --Date
+end -- Date
 
 class Player < Identifiable
 attributes
     name: String
     email: String
     dob: Date
-    score: Integer derived
+    score: Integer -- derived
     status: PlayerStatus
     state: ProfileState
 constraints
@@ -84,32 +99,31 @@ constraints
     -- Can't play more than one match at a time
     inv onlyPlayingOneOrNoMatches:
         matchHistory->select(m | m.status = #INPROGRESS)->count() <= 1
-end --Player
+end -- Player
 
-class Message
+class Message < Identifiable
 attributes
     message: String
     date: Date --should be time
-end --Message
+end -- Message
 
 class Chat
-attributes
 constraints
     -- Can only chat if one player has accepted a message or friend request
     -- chatSenderSentRequest && chatRcvrAcceptedRequest ||
     -- chatRcvrSentRequest && chatSenderAcceptedRequest
-    -->inv onlyChatIfRequestAccepted:
-    --    let
-    --        senderFriends = chatMsgSender.sentReqs->forAll(r |
-    --            r.type = #FRIEND and r.status = #ACCEPTED)->union(
-    --                chatMsgSender.rcvdReqs->forAll(r |
-    --                    r.type = #FRIEND and r.status = #ACCEPTED)),
-    --        rcvrFriends = chatMsgRcvr.sentReqs->forAll(r |
-    --            r.type = #FRIEND and r.status = #ACCEPTED)->union(
-    --                chatMsgRcvr.rcvdReqs->forAll(r |
-    --                    r.type = #FRIEND and r.status = #ACCEPTED)),
-    --    in senderFriends->includes(chatMsgRcvr) or
-    --        rcvrFriends->includes(chatMsgSender)
+    inv onlyChatIfRequestAccepted:
+        let
+            senderFriends = chatMsgSender.sentReqs->select(r |
+                r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
+                    chatMsgSender.rcvdReqs->select(r |
+                        r.type = #FRIEND and r.status = #ACCEPTED).reqSender),
+            rcvrFriends = chatMsgRcvr.sentReqs->select(r |
+                r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
+                    chatMsgRcvr.rcvdReqs->select(r |
+                        r.type = #FRIEND and r.status = #ACCEPTED).reqSender)
+        in senderFriends->includes(chatMsgRcvr) or 
+            rcvrFriends->includes(chatMsgSender)
 
     -- Chats can only have 2 participants
     inv onlyTwoParticipants:
@@ -126,13 +140,7 @@ constraints
             followingMsgs = messages->subOrderedSet(i + 1)
         in messages->last() <> m implies
             followingMsgs->forAll(nextM | nextM.date.after(m.date)))
-end --Chat
-
--- Intentionally misplaced to serve as a reminder to add it
-association Participants between
-    Player[2] role participants
-    Chat[*] role chats
-end
+end -- Chat
 
 class Request < Identifiable
 attributes
@@ -140,9 +148,68 @@ attributes
     sentDate: Date
     type: RequestType
 constraints
-end --Request
+    -- For each type of request, senders can only have one pending request
+    -- per receiver
+    inv onlyOnePendingReqPerSenderReceiverReqTypeTuple:
+        let
+            pending = Request.allInstances->select(req | req.status = #PENDING)
+        in pending->forAll(r1, r2 | r1 <> r2 implies
+            (r1.reqSender <> r2.reqSender or r1.reqRcvr <> r2.reqRcvr))
 
+    -- Can only have one friend or message request pending per sender-receiver
+    -- paring
+    inv onlyOnePendingMsgFrReqPerPair:
+        let
+            pending = Request.allInstances->select(req | req.status = #PENDING and
+                Set{#FRIEND, #MESSAGE}->includes(req.type))
+        in pending->forAll(r1, r2 |
+            r1.reqSender <> r2.reqRcvr or r1.reqRcvr <> r2.reqSender)
 
+    -- Can only accept one friend or message request
+    inv onlyOneAcceptedFriendOrMessageRequest:
+        let
+            pending = Request.allInstances->select(req | req.status = #ACCEPTED and
+                Set{#FRIEND, #MESSAGE}->includes(req.type))
+        in pending->forAll(r1, r2 | r1 <> r2 implies
+            (r1.reqSender <> r2.reqSender or r1.reqRcvr <> r2.reqRcvr))
+
+    -- Can't send any new friend or message requests to a player if
+    -- they already accepted the last one
+    inv noPendingRequestsIfAccepted:
+        let
+            frAndMsgReqs = Request.allInstances->select(req |
+                Set{#FRIEND, #MESSAGE}->includes(req.type)),
+            pending = frAndMsgReqs->select(req | req.state = #PENDING),
+            accepted = frAndMsgReqs->select(req | req.state = #ACCEPTED)
+        in pending->forAll(p | accepted->forAll(a | 
+            p.reqSender <> a.reqSender or p.reqRcvr <> a.reqRcvr))
+end -- Request
+
+class MatchRequest < Request
+attributes
+    matchType: MatchType
+    timed: Boolean
+constraints
+    -- All message requests have the type #MESSAGE
+    inv messageReqTypeIsMsgReq:
+        MessageRequest.allInstances->forAll(mr | mr.type = #MESSAGE)
+
+    -- Only accepted match requests may refer to a match
+    inv noMatchUnlessAccepted:
+        MessageRequest.allInstances->forAll(mr |
+            (mr.status = #ACCEPTED implies mr.match->size() = 1) and
+            (mr.status <> #ACCEPTED implies mr.match->size() = 0))
+
+    -- Accepted match type must match requested match type
+    inv matchTypeMatchesRequestedMatchType:
+        MessageRequest.allInstances->forAll(mr |
+            mr.status = #ACCEPTED implies
+                (mr.matchType = mr.match.type) and mr.timed and mr.match.timed
+        )
+
+    -- Only unranked matches may be untimed
+    inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
+end -- MatchRequest
 
 associationclass Block
 between
@@ -151,9 +218,15 @@ between
 attributes
     date: Date
     status: BlockStatus
-end
+end -- Block
 
---game
+-------------------Game-------------------
+
+associationclass Rack
+between
+    Player[2] role players
+    Match[*]
+end -- Rack
 
 class Play < Identifiable
 attributes
@@ -166,31 +239,244 @@ attributes
     time: Integer -- Time in seconds
     bonusApplied: Boolean
 constraints
-    inv uniqueIDs: Identifiable.allInstances->forAll(
-            i, j | i <> j implies i.id <> j.id)
-end --Play
+    -- Plays can only go in one direction
+    inv oneDirection:
+        (startRow = endRow implies (endCol - startCol) >= 0) and
+        (startCol = endCol implies (endRow - startRow) >= 0)
+
+    -- Words must intersect or be spelt right alongside existing words
+    -- or from the center of the board if all slots are empty
+    inv intersectsWithAnotherWord:
+        (startRow = endRow implies match.board.slots->select(s |
+            (Set{startRow - 1, startRow + 1}->includes(s.row) and
+                s.column >= startCol and s.column <= endCol)
+            or
+            (s.row = startRow and
+                Set{startCol - 1, endCol + 1}->includes(s.column))
+            ).tile->notEmpty()
+        ) and
+        (startCol = endCol implies match.board.slots.select(s |
+            (Set{startCol - 1, startCol + 1}->includes(s.column) and
+                s.row >= startRow and s.column <= endRow)
+            or
+            (s.column = startCol and
+                Set{startRow - 1, endRow + 1}->includes(s.row))
+            ).tile->notEmpty()
+        )
+
+    -- Tiles must be ordered
+    inv tilesAreOrdered: tiles->forAll(t |
+        let
+            i = tiles->indexOf(t),
+            followingTiles = tiles->subOrderedSet(i + 1)
+        in tiles->last() <> t implies
+            followingTiles->forAll(nextT | nextT.date.after(t.date)))
+
+    -- Passed plays cant have any tiles
+    inv passedPlayHasNoTiles: type = #PASS implies tiles->isEmpty()
+
+    /*
+    -- Only valid words may be spelt
+    inv allWordsSpeltAreValidAndOnlySpeltWordsAreLinked:
+        if type = #PLAY then
+            if startRow = endRow then
+                let
+                    allSlots = match.board.slots,
+
+                    -- Get all slots in the play range and slots adjoining each end
+                    mainWordSlots = allSlots->select(s | s.row = startRow and
+                        s.column >= (startCol - 1) and s.column <= (endCol + 1)),
+
+                    nextLetter = 0,
+                    mainWord = mainWordSlots->iterate(s; word:String = ''|
+                        if s.tile->isEmpty() then
+                            if s.column >= startCol and s.column <= endCol then
+                                word.concat(tiles->at(nextLetter).letter.letter)
+                                nextLetter = nextLetter + 1
+                            else '' endif
+                        else
+                            word.concat(s.tile.letter.letter)
+                        endif
+                    ),
+
+                    secondaryWordsStart = mainWordSlots->select(s |
+                        let
+                            adjAbove = allSlots->select(as |
+                                as.row = (s.row - 1) and as.column = s.column),
+                            adjBelow = allSlots->select(as |
+                                as.row = (s.row + 1) and as.column = s.column)
+                        in s.tile.isEmpty() and s.column >= startCol and s.column <= endCol and
+                            (adjAbove.tile->isEmpty() implies adjBelow.tile->notEmpty()) and
+                            (adjBelow.tile->isEmpty() implies adjAbove.tile->notEmpty())
+                    ),
+
+                    secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
+                        let
+                            complete = false,
+
+                            above = allSlots->select(as | as.row = (s.row - 1) and
+                                as.column = s.column).tile->notEmpty(),
+
+                            wordSlots = allSlots->select(ws |
+                                if above and ws.column = s.column then
+                                    ws.row >= s.row
+                                else
+                                    ws.row <= s.row
+                                endif
+                            )->sortedBy(ws | ws.row),
+
+                            if above then wordSlots->reverse() endif
+                        in wordLst->union(Set{wordSlots->iterate(ws; word:String = '' |
+                            if ws.tile->isEmpty() then complete = true endif
+
+                            if not complete then
+                                if not above then
+                                    word->concat(ws.tile.letter.letter)
+                                else
+                                    temp = ws.tile.letter.letter
+                                    word = temp->concat(word)
+                                endif
+                            endif
+                        )})
+                    ),
+
+                    allSpeltWords = mainWord->union(secondaryWords),
+
+                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
+                        words->union(Set{w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        )})
+                    ),
+
+                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
+                        words->union(Set{w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        )})
+                    )
+                in allValidWords->includesAll(allSpeltWords) and
+                    allSpeltWords->includesAll(allLinkedWords)
+            else true endif
+            or
+            if startCol = endCol then
+                let
+                    allSlots = match.board.slots,
+
+                    -- Get all slots in the play range and slots adjoining each end
+                    mainWordSlots = allSlots->select(s | s.column = startCol and
+                        s.row >= (startRow - 1) and s.row <= (endRow + 1)),
+
+                    nextLetter = 0,
+                    mainWord = mainWordSlots->iterate(s; word:String = ''|
+                        if s.tile->isEmpty() then
+                            if s.row >= startRow and s.row <= endRow then
+                                word.concat(tiles->at(nextLetter).letter.letter)
+                                nextLetter = nextLetter + 1
+                            endif
+                        else
+                            word.concat(s.tile.letter.letter)
+                        endif
+                    ),
+
+                    secondaryWordsStart = mainWordSlots->select(s |
+                        let
+                            adjLeft = allSlots->select(as |
+                                as.column = (s.column - 1) and as.row = s.row),
+                            adjRight = allSlots->select(as |
+                                as.column = (s.column + 1) and as.row = s.row)
+                        in s.tile.isEmpty() and s.row >= startRow and s.row <= endRow and
+                            (adjLeft.tile->isEmpty() implies adjRight.tile->notEmpty()) and
+                            (adjRight.tile->isEmpty() implies adjLeft.tile->notEmpty())
+                    )
+
+                    secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
+                        let
+                            complete = false,
+
+                            left = allSlots->select(as | as.column = (s.column - 1) and
+                                as.row = s.row).tile->notEmpty(),
+
+                            wordSlots = allSlots->select(ws |
+                                if left and ws.row = s.row then
+                                    ws.column >= s.column
+                                else
+                                    ws.column <= s.column
+                                endif
+                            )->sortedBy(ws | ws.column),
+
+                            if left then wordSlots->reverse() endif
+                        in wordLst->union(Set{wordSlots->iterate(ws; word:String = '' |
+                            if ws.tile->isEmpty() then complete = true endif
+
+                            if not complete then
+                                if not left then
+                                    word->concat(ws.tile.letter.letter)
+                                else
+                                    temp = ws.tile.letter.letter
+                                    word = temp->concat(word)
+                                endif
+                            endif
+                        )})
+                    )
+
+                    allSpeltWords = mainWord->union(secondaryWords),
+
+                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
+                        words->union(Set{w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        )})
+                    ),
+
+                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
+                        words->union(Set{w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        )})
+                    )
+                in allValidWords->includesAll(allSpeltWords) and
+                    allSpeltWords->includesAll(allLinkedWords)
+            else true endif
+        else true endif
+    */
+
+    -- #TODO
+    -- Check to ensure that the player's match stats are updated properly
+    --inv :
+
+    -- Verify that a bonus is to be applied
+    inv bonusCorrectlyFlagged:
+        words.category->includes(match.category) implies bonusApplied
+
+    -- #TODO
+    -- Score calculation verification
+    inv scoreCorrectlyCalculated:
+        let
+            multiplier = if bonusApplied then 1.5 else 1 endif,
+            scoreCheck = 0
+        in score = scoreCheck
+end -- Play
 
 class Board
 attributes
     row: Integer
     column: Integer
-operations 
 constraints
-    -- should row and col be in attributes, i put it there Kayvia
-    inv boardSizeIsValid: row > 0 and row <= 15 and column > 0 and column <= 15 
-end --Board
+    -- Must have 15 by 15 slots
+    inv boardSizeIsValid: slots->forAll(s |
+        s.row > 0 and s.row <= 15 and s.column > 0 and s.column <= 15)
+end -- Board
 
 class Slot
 attributes
     row: Integer
     column: Integer
-end --Slot
+end -- Slot
 
 class Tile
 attributes
-    --letter: String
-    --score: Integer
-end --Tile
+    score: Integer
+constraints
+    -- Ensure Tiles have a valid point value
+    inv validPoints: points > 0 and points <= 10
+end -- Tile
 
 class Letter
 attributes
@@ -201,32 +487,33 @@ constraints
         'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
         'X', 'Y', 'Z'
     }->includes(letter)
-end --Letter
+end -- Letter
 
 class LetterBag
-attributes
-end --LetterBag
+end -- LetterBag
 
 class Word
 attributes
     String: Word
     category:  Category
-end
-
---class Rack
---attributes
-----end -- Rack
-associationclass Rack
-between
-    Player[*]
-    Match[*]
-attributes
-end
-
+constraints
+    -- No duplicate words
+    inv uniqueWords: Word.allInstances->forAll(w1, w2 |
+            if w1 <> w2 then
+                let
+                    word1 = w1.letters->iterate(l; word:String = '' |
+                        word->concat(l.letter)),
+                    word2 = w2.letters->iterate(l; word:String = '' |
+                        word->concat(l.letter))
+                in not word1.equalsIgnoreCase(word2)
+            else true endif
+        )
+end -- Word
 
 class Dictionary
-attributes
 constraints
+    -- Only one dictionary for the lifecycle of the system
+    inv onlyOneDictionaryInstance: Dictionary.allInstances->size() <= 1
 end -- Dictionary
 
 class Match < Identifiable
@@ -238,94 +525,139 @@ attributes
     matchStatus: MatchStatus
 constraints
     -- Only unranked matches may be untimed
-    inv noUntimedRankedMatchRequests: 
-        (matchType = #RANKED) implies timed
-    
-    --Can't play more than one match at a time
-    --inv onlyPlayingOneOrNoMatches: Player.allInstances->forAll
-    --    (p | p.matchHistory ->(m | m.status = #INPROGRESS).size() <= 1)
+    inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
 
-    --inv onlyPlayingOneOrNoMatches:
-        --matchHistory->count(m | m.matchStatus = #INPROGRESS) <= 1
-    --    MatchHistory->select(m | m.matchStatus = #INPROGRESS)->count() <= 1
-        
-    --> #TODO
+    -- Plays must be ordered
+    inv playsAreOrdered: plays->forAll(p |
+        let
+            i = plays->indexOf(p),
+            followingPlays = plays->subOrderedSet(i + 1)
+        in plays->last() <> p implies
+            followingPlays->forAll(nextP | nextP.date.after(p.date)))
+
     -- Plays must alternate between players, ie the game should be turn based
-    --inv :
+    inv playsAlternateBetweenPlayers:
+        let
+            player1 = plays->at(0).rack.players,
+            player2 = plays->at(1).rack.players
+        in plays->iterate(p; result:Boolean = true |
+                if plays->indexOf(p).mod(2) = 0 then
+                    result = result and (player1 = p)
+                else
+                    result = result and (player2 = p)
+                endif
+            )
 
-    --> Ensure all Tiles with the same letter have the same score
-    --inv consistentTilePointValues:
-    --    let
-    --        bagTiles = board.letterBag.tiles
-    --        rackTiles = rack.tiles
-    --        boardTiles = board.slot.tile
-    --        allTiles = bagTiles->union(rackTiles->union(boardTiles))
-    --    in allTiles->forAll(t1, t2|
-    --        if t1.letter = t2.letter then t1.points = t2.points endif)
+    -- Ensure all Tiles with the same letter have the same score
+    inv consistentTilePointValues:
+        let
+            bagTiles = board.letterBag.tiles,
+            rackTiles = rack.tiles,
+            boardTiles = board.slot.tile,
+            allTiles = bagTiles->union(rackTiles->union(boardTiles))
+        in allTiles->forAll(t1, t2|
+            t1.letter.letter = t2.letter.letter implies t1.points = t2.points)
 
-    --Players must be similar rank
-    --inv similarRank:
-    --    let
-    --        playerRanks = LeaderBoard--player.leaderboard.Rank,
-    --    in playerRanks->forAll(p1, p2 |
-    --        if type = #RANKED then
-    --            (p1.placement - p2.placement) <= 100
-    --        else
-    --            (p1.placement - p2.placement) <= 200)
+    -- must be a fixed set of tiles in circulation for a given match
+    inv fixedNumberOfLettersInMatch:
+        let
+            bagTiles = board.letterBag.tiles,
+            rackTiles = rack.tiles,
+            boardTiles = board.slot.tile,
+            allTiles = bagTiles->union(rackTiles->union(boardTiles)),
+            a = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('A') then cnt = cnt + 1 else cnt = cnt endif),
+            b = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('B') then cnt = cnt + 1 else cnt = cnt endif),
+            c = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('C') then cnt = cnt + 1 else cnt = cnt endif),
+            d = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('D') then cnt = cnt + 1 else cnt = cnt endif),
+            e = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('E') then cnt = cnt + 1 else cnt = cnt endif),
+            f = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('F') then cnt = cnt + 1 else cnt = cnt endif),
+            g = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('G') then cnt = cnt + 1 else cnt = cnt endif),
+            h = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('H') then cnt = cnt + 1 else cnt = cnt endif),
+            i = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('I') then cnt = cnt + 1 else cnt = cnt endif),
+            j = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('J') then cnt = cnt + 1 else cnt = cnt endif),
+            k = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('K') then cnt = cnt + 1 else cnt = cnt endif),
+            l = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('L') then cnt = cnt + 1 else cnt = cnt endif),
+            m = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('M') then cnt = cnt + 1 else cnt = cnt endif),
+            n = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('N') then cnt = cnt + 1 else cnt = cnt endif),
+            o = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('O') then cnt = cnt + 1 else cnt = cnt endif),
+            p = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('P') then cnt = cnt + 1 else cnt = cnt endif),
+            q = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('Q') then cnt = cnt + 1 else cnt = cnt endif),
+            r = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('R') then cnt = cnt + 1 else cnt = cnt endif),
+            s = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('S') then cnt = cnt + 1 else cnt = cnt endif),
+            t = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('T') then cnt = cnt + 1 else cnt = cnt endif),
+            u = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('U') then cnt = cnt + 1 else cnt = cnt endif),
+            v = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('V') then cnt = cnt + 1 else cnt = cnt endif),
+            w = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('W') then cnt = cnt + 1 else cnt = cnt endif),
+            x = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('X') then cnt = cnt + 1 else cnt = cnt endif),
+            y = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('Y') then cnt = cnt + 1 else cnt = cnt endif),
+            z = allTiles->iterate(char; cnt:Integer = 0 |
+                if char.letter.equalsIgnoreCase('Z') then cnt = cnt + 1 else cnt = cnt endif)
+        in (a = 9 and b = 2 and c = 2 and d = 4 and e = 12 and f = 2 and
+            g = 3 and h = 2 and i = 9 and j = 1 and k = 1 and l = 4 and
+            m = 2 and n = 6 and o = 8 and p = 2 and q = 1 and r = 6 and
+            s = 4 and t = 6 and u = 4 and v = 2 and w = 2 and x = 1 and
+            y = 2 and z = 1)
 
+    -- Players must be similar rank
+    inv similarRank:
+        players.leaderboard.Rank->forAll(p1, p2 |
+            type = #RANKED implies (p1.placement - p2.placement).abs() <= 100 and
+            type <> #RANKED implies (p1.placement - p2.placement).abs() <= 200)
 end -- Match
 
-class MatchRequest < Request
-attributes
-    matchType: MatchType
-    timed: Boolean
-end --MatchRequest
-
 class LeaderBoard
-attributes
-end --Leaderboard
+constraints
+    -- Only one Leaderboard for the lifetime of the system
+    inv onlyOneLeaderboardInstance: Leaderboard.allInstances->size() <= 1
+end -- Leaderboard
 
 associationclass Rank
 between
     LeaderBoard[1]
-    Player[*] role ranks ordered
+    Player[*] role players ordered
 attributes
     placement: Integer
-end --Rank
+constraints
+    -- #TODO
+    -- Ensure correct rankings are always assigned
+    -- incv :
+end -- Rank
 
---Game
+---------------Associations---------------
 
-enum PlayerStatus {Online, Offline, Away, Playing}
-enum ProfileState {Private, Public}
-enum MatchType {RANKED, UNRANKED}
-enum Category {animal, music, movies, food, books, countries, none}
-enum PlayType {PLAY, PASS}
-enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED}
-enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
-enum RequestType {FRIEND, MESSAGE, MATCH}
-enum BlockStatus {TRUE, FALSE}
+composition PlayerChat between
+    Chat[1] role chat
+    Message[*] role msgs ordered
+end
 
-
---Associations
 association ChatRooms between
-    Chat[0..*] role chatRooms
-    Player[2] role players     
-end
-
-
-composition GameBoard between
-    Board[1]
-    Slot[*]     
-end
-
-aggregation MatchLetterBag between
-    LetterBag[1]
-    Tile[*]    
-end
-
-association Words between
-    Word[*]
-    Match[*]
+    Chat[*] role chatRooms
+    Player[2] role participants
 end
 
 association SentRequest between
@@ -338,6 +670,11 @@ association RecievedRequest between
     Request[*] role rcvdReqs
 end
 
+association RequestMatch between
+    MatchRequest[1] role matchReq
+    Match[0..1]
+end
+
 association SentMessage between
     Player[1] role msgSender
     Message[*] role sentMsgs
@@ -348,54 +685,46 @@ association RecievedMessage between
     Message[*] role rcvdMsgs
 end
 
-association RequestMatch between
-    MatchRequest[1] role matchReq
-    Match[0..1] role match
-end
 
-composition PlayerChat between
-    Chat[1] role chat
-    Message[*] role msgs ordered
-end
 
 association Observes between
     LeaderBoard[1] role observer
     Match[*] role watches
 end
 
-association Plays between
-    Match[1] role match
-    Play[*] role playHistory ordered
+association MatchGameBoard between
+    Match[1]
+    Board[1]
 end
 
-aggregation BoardSlots between
-    Slot[1] role slot
-    Tile[0..1] role tile
+composition Grid between
+    Board[1]
+    Slot[*] role slots
 end
 
-aggregation RackPlace between 
-    Rack[1] role rack
-    Tile[0..9] role plays2
+aggregation Fill between
+    Slot[1]
+    Tile[0..1]
 end
 
---aggregation Holds3 between --change name
---   LetterBag[1] role bag
---   Tile[*] role tiles
---end
-
-association Played between
-    Rack[1] role rack
-    Play[*] role plays
+association LetterOptions between
+    LetterBag[1] 
+    Board[1]
 end
 
-association Spelt between
-    Play[*] role plays
+aggregation Stock between
+    LetterBag[1]
+    Tile[*]
+end
+
+association WordCheck between
+    Match[*] role matches
+    Dictionary[1]
+end
+
+association ValidWord between
+    Dictionary[1]
     Word[*] role words
-end
-
-association Uses between
-    Play[1] role play
-    Tile[0..9] role tiles ordered
 end
 
 association Spelling between
@@ -403,41 +732,32 @@ association Spelling between
     Letter[*] role letters ordered
 end
 
-association Marked between
-    Tile[*] role tiles
-    Letter[1] role letter
-end
-
-association MatchGameBoard between
-   Match[1] role match
-   Board[1] role board
-end
-
-association WordCheck between
-    Match[*] role match
-    Dictionary[1] role dictionary
-end
-
---association unknown3 between
---    Board[1]
---    Match[1]
---end
---composition unnamed3 between
---   Board[1] role board
---    Slot[*] role slot
---end
-
-association LetterOptions between
-    LetterBag[1] 
-    Board[1]
-end
-
-association ValidWord between
-    Dictionary[1] role dictionary
+association Spelt between
+    Play[*] role plays
     Word[*] role words
 end
 
---association unnamed4 between
---    Board[1] role board
---    LetterBag[1] role bag
---end
+association Plays between
+    Match[1]
+    Play[*] role playHistory ordered
+end
+
+aggregation Holds between 
+    Rack[1]
+    Tile[0..9] role tiles
+end
+
+association Played between
+    Rack[1]
+    Play[*] role plays
+end
+
+association Uses between
+    Play[1]
+    Tile[0..9] role tiles ordered
+end
+
+association Marked between
+    Tile[*] role tiles
+    Letter[1]
+end
