@@ -5,10 +5,10 @@ enum ProfileState {Private, Public}
 enum MatchType {RANKED, UNRANKED}
 enum Category {animal, music, movies, food, books, countries, none}
 enum PlayType {PLAY, PASS}
-enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED}
+enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED, LOST}
 enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
-enum BlockStatus {TRUE, FALSE}
+enum BlockStatus {BLOCKED, UNBLOCKED}
 
 
 class Identifiable
@@ -145,7 +145,7 @@ end -- Date
 
 class Player < Identifiable
 attributes
-    name: String
+    username: String
     email: String
     dob: Date
     score: Integer -- derived
@@ -168,7 +168,7 @@ constraints
     -- Can't receive requests from blocked players
     inv notReceiveRequestsFromBlocked:
         let
-            blocks = Block->select(b | b.status = #Blocked)
+            blocks = block[player]->select(b | b.status = #BLOCKED)
         in blocks->forAll(b |
             let
                 requests = rcvdReqs->select(r |
@@ -179,7 +179,7 @@ constraints
     -- Can't send requests to blocked players
     inv notSendRequestsToBlocked:
         let
-            blocks = Block->select(b | b.status = #Blocked)
+            blocks = block[player]->select(b | b.status = #BLOCKED)
         in blocks->forAll(b | sentReqs->select(r |
             r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
         )
@@ -313,7 +313,7 @@ constraints
     inv matchTypeMatchesRequestedMatchType:
         MatchRequest.allInstances->forAll(mr |
             mr.status = #ACCEPTED implies
-                (mr.matchType = mr.match.matchType) and mr.timed and mr.match.timed
+                (mr.matchType = mr.match.type) and mr.timed and mr.match.timed
         )
 
     -- Only unranked matches may be untimed
@@ -446,17 +446,21 @@ constraints
 
                     allSpeltWords = mainWord->union(secondaryWords),
 
-                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
-                        words->union(Set{w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
-                        )})
-                    ),
+                    --allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
+                    --    words->union(Set{w->iterate(l; word:String = '' |
+                    --        word->concat(l.letter)
+                    --    )})
+                    --),
+                    allValidWords = match.dictionary.word->collect(w |
+                        w->iterate(l; word:String = '' | word->concat(l.letter))),
 
-                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
-                        words->union(Set{w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
-                        )})
-                    )
+                    --allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
+                    --    words->union(Set{w->iterate(l; word:String = '' |
+                    --        word->concat(l.letter)
+                    --    )})
+                    --)
+                    allLinkedWords = words->collect(w |
+                        w->iterate(l; word:String = '' | word->concat(l.letter))),
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
             else true endif
@@ -622,7 +626,7 @@ end -- Dictionary
 
 class Match < Identifiable
 attributes
-    matchType: MatchType
+    type: MatchType
     timed: Boolean
     time: Integer -- Elapsed seconds
     date: Date
@@ -630,7 +634,7 @@ attributes
     status: MatchStatus
 constraints
     -- Only unranked matches may be untimed
-    inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
+    inv noUntimedRankedMatchRequests: (type = #RANKED) implies timed
 
     -- Plays must be ordered
     inv playsAreOrdered: playHistory->forAll(p |
@@ -730,12 +734,12 @@ constraints
 
     -- Players must be similar rank
     inv similarRank:
-        players.Rank->forAll(p1, p2 |
+        players.rank->forAll(p1, p2 |
             type = #RANKED implies (p1.placement - p2.placement).abs() <= 100 and
             type <> #RANKED implies (p1.placement - p2.placement).abs() <= 200)
 end -- Match
 
-class LeaderBoard
+class Leaderboard
 constraints
     -- Only one Leaderboard for the lifetime of the system
     inv onlyOneLeaderboardInstance: Leaderboard.allInstances->size() <= 1
@@ -743,7 +747,7 @@ end -- Leaderboard
 
 associationclass Rank
 between
-    LeaderBoard[1]
+    Leaderboard[1]
     Player[*] role players ordered
 attributes
     placement: Integer
@@ -793,7 +797,7 @@ end
 
 
 association Observes between
-    LeaderBoard[1] role observer
+    Leaderboard[1] role observer
     Match[*] role watches
 end
 
