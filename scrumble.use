@@ -405,7 +405,6 @@ constraints
     -- Passed plays or match quits cant have any tiles
     inv passedPlayHasNoTiles: Set{#PASS, #QUIT}->includes(type) implies tiles->isEmpty()
 
-    /*
     -- #TODO
     -- Only valid words may be spelt
     inv allWordsSpeltAreValidAndOnlySpeltWordsAreLinked:
@@ -416,16 +415,18 @@ constraints
 
                     -- Get all slots in the play range and slots adjoining each end
                     mainWordSlots = allSlots->select(s | s.row = startRow and
-                        s.column >= (startCol - 1) and s.column <= (endCol + 1))->sortBy(s | s.column),
+                        s.column >= (startCol - 1) and s.column <= (endCol + 1))->sortedBy(s | s.column),
 
-                    nextLetter = 0,
                     mainWord = mainWordSlots->iterate(s; word:String = ''|
                         if s.tile->isEmpty() then
                             if s.column >= startCol and s.column <= endCol then
                                 let
-                                word.concat(tiles->at(nextLetter).letter.letter)
-                                nextLetter = nextLetter + 1
-                            else '' endif
+                                    slotIndex = mainWordSlots->indexOf(s),
+                                    visitedSlots = mainWordSlots->subSequence(0, slotIndex),
+                                    nextLetter = visitedSlots->iterate(ws; ans:Integer = 0 |
+                                        if ws.tile->isEmpty() then ans + 1 else ans endif)
+                                in word.concat(tiles->at(nextLetter).letter.letter)
+                            else word endif
                         else
                             word.concat(s.tile.letter.letter)
                         endif
@@ -437,7 +438,7 @@ constraints
                                 as.row = (s.row - 1) and as.column = s.column),
                             adjBelow = allSlots->select(as |
                                 as.row = (s.row + 1) and as.column = s.column)
-                        in s.tile.isEmpty() and s.column >= startCol and s.column <= endCol and
+                        in s.tile->isEmpty() and s.column >= startCol and s.column <= endCol and
                             (adjAbove.tile->isEmpty() and adjBelow.tile->notEmpty()) or
                             (adjBelow.tile->isEmpty() and adjAbove.tile->notEmpty())
                     ),
@@ -457,37 +458,37 @@ constraints
                                 endif
                             )->sortedBy(ws | ws.row),
 
-                            if above then wordSlots->reverse() endif
-                        in wordLst->union(Set{wordSlots->iterate(ws; word:String = '' |
-                            if ws.tile->isEmpty() then complete = true endif
-
-                            if not complete then
-                                if not above then
-                                    word->concat(ws.tile.letter.letter)
-                                else
-                                    temp = ws.tile.letter.letter
-                                    word = temp->concat(word)
-                                endif
-                            endif
-                        )})
-                    ),
-
-                    allSpeltWords = mainWord->union(secondaryWords),
-
-                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
-                        words->including(w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
+                            wordSlots = if above then wordSlots->reverse() else wordSlots endif
+                        in wordLst->including(wordSlots->iterate(ws; word:String = '' |
+                            let
+                                complete = ws.tile->isEmpty()
+                            in
+                                if not complete then
+                                    if not above then
+                                        word.concat(ws.tile.letter.letter)
+                                    else
+                                        ws.tile.letter.letter.concat(word)
+                                    endif
+                                else word endif
                         ))
                     ),
 
-                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
-                        words->including(w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
+                    allSpeltWords = secondaryWords->including(mainWord),
+
+                    allValidWords = match.dictionary.words->iterate(w; wSet:Set(String) = Set{} |
+                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
+                            wordStr.concat(l.letter)
+                        ))
+                    ),
+
+                    allLinkedWords = words->iterate(w; wSet:Set(String) = Set{} |
+                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
+                            wordStr.concat(l.letter)
                         ))
                     )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
-            else true endif
+            else false endif
             or
             if startCol = endCol then
                 let
@@ -495,15 +496,18 @@ constraints
 
                     -- Get all slots in the play range and slots adjoining each end
                     mainWordSlots = allSlots->select(s | s.column = startCol and
-                        s.row >= (startRow - 1) and s.row <= (endRow + 1)),
+                        s.row >= (startRow - 1) and s.row <= (endRow + 1))->sortedBy(s | s.row),
 
-                    nextLetter = 0,
                     mainWord = mainWordSlots->iterate(s; word:String = ''|
                         if s.tile->isEmpty() then
                             if s.row >= startRow and s.row <= endRow then
-                                word.concat(tiles->at(nextLetter).letter.letter)
-                                nextLetter = nextLetter + 1
-                            endif
+                                let
+                                    slotIndex = mainWordSlots->indexOf(s),
+                                    visitedSlots = mainWordSlots->subSequence(0, slotIndex),
+                                    nextLetter = visitedSlots->iterate(ws; ans:Integer = 0 |
+                                        if ws.tile->isEmpty() then ans + 1 else ans endif)
+                                in word.concat(tiles->at(nextLetter).letter.letter)
+                            else word endif
                         else
                             word.concat(s.tile.letter.letter)
                         endif
@@ -511,63 +515,62 @@ constraints
 
                     secondaryWordsStart = mainWordSlots->select(s |
                         let
-                            adjLeft = allSlots->select(as |
+                            adjAbove = allSlots->select(as |
                                 as.column = (s.column - 1) and as.row = s.row),
-                            adjRight = allSlots->select(as |
+                            adjBelow = allSlots->select(as |
                                 as.column = (s.column + 1) and as.row = s.row)
-                        in s.tile.isEmpty() and s.row >= startRow and s.row <= endRow and
-                            (adjLeft.tile->isEmpty() and adjRight.tile->notEmpty()) or
-                            (adjRight.tile->isEmpty() and adjLeft.tile->notEmpty())
-                    )
+                        in s.tile->isEmpty() and s.row >= startRow and s.row <= endRow and
+                            (adjAbove.tile->isEmpty() and adjBelow.tile->notEmpty()) or
+                            (adjBelow.tile->isEmpty() and adjAbove.tile->notEmpty())
+                    ),
 
                     secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
                         let
                             complete = false,
 
-                            left = allSlots->select(as | as.column = (s.column - 1) and
+                            above = allSlots->select(as | as.column = (s.column - 1) and
                                 as.row = s.row).tile->notEmpty(),
 
                             wordSlots = allSlots->select(ws |
-                                if left and ws.row = s.row then
+                                if above and ws.row = s.row then
                                     ws.column >= s.column
                                 else
                                     ws.column <= s.column
                                 endif
                             )->sortedBy(ws | ws.column),
 
-                            if left then wordSlots->reverse() endif
-                        in wordLst->union(Set{wordSlots->iterate(ws; word:String = '' |
-                            if ws.tile->isEmpty() then complete = true endif
-
-                            if not complete then
-                                if not left then
-                                    word->concat(ws.tile.letter.letter)
-                                else
-                                    temp = ws.tile.letter.letter
-                                    word = temp->concat(word)
-                                endif
-                            endif
-                        )})
-                    )
-
-                    allSpeltWords = mainWord->union(secondaryWords),
-
-                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
-                        words->including(w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
+                            wordSlots = if above then wordSlots->reverse() else wordSlots endif
+                        in wordLst->including(wordSlots->iterate(ws; word:String = '' |
+                            let
+                                complete = ws.tile->isEmpty()
+                            in
+                                if not complete then
+                                    if not above then
+                                        word.concat(ws.tile.letter.letter)
+                                    else
+                                        ws.tile.letter.letter.concat(word)
+                                    endif
+                                else word endif
                         ))
                     ),
 
-                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
-                        words->including(w->iterate(l; word:String = '' |
-                            word->concat(l.letter)
+                    allSpeltWords = secondaryWords->including(mainWord),
+
+                    allValidWords = match.dictionary.words->iterate(w; wSet:Set(String) = Set{} |
+                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
+                            wordStr.concat(l.letter)
+                        ))
+                    ),
+
+                    allLinkedWords = words->iterate(w; wSet:Set(String) = Set{} |
+                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
+                            wordStr.concat(l.letter)
                         ))
                     )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
-            else true endif
+            else false endif
         else true endif
-    */
 
     -- Verify that a bonus is to be applied
     inv bonusCorrectlyFlagged:
@@ -580,7 +583,7 @@ constraints
             tiles = rack.tiles->union(match.board.slots.tile)->asSet(),
             flatScore = words->iterate(w; ans:Integer = 0 |
                     ans + w.letters->iterate(l; ws:Integer = 0 |
-                        ws + tiles->one(t | t.letter.letter = l.letter).points
+                        ws + tiles->select(t | t.letter.letter = l.letter)->asSequence()->at(0).points
                     )
                 )
         in score = if bonusApplied then (flatScore * multiplier) else flatScore endif
@@ -765,10 +768,10 @@ constraints
     inv similarRank:
         players.rank->forAll(p1, p2 |
             (type = #RANKED and (p1.placement - p2.placement).abs() <= 100) or
-            p1.placement - p2.placement).abs() <= 200
+            (p1.placement - p2.placement).abs() <= 200)
 
     -- Once a player quits the match must end
-    inv matchEndIfQuit: 
+    inv matchEndIfQuit:
         (playHistory->select(p | p.type = #QUIT)->size() <= 1 implies
             playHistory->last().type = #QUIT) and
         playHistory->last().type = #QUIT implies status = #ABANDONED
