@@ -183,7 +183,6 @@ constraints
             r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
         )
 
-    -- #TODO
     -- Can only exchange match requests among friends
     inv onlyFriendsExchangeMatchRequests:
         let
@@ -208,7 +207,6 @@ constraints
             )
         )
 
-    -- #TODO
     -- Can only chat if one player has accepted a message or friend request
     -- from the other player
     inv onlyChatIfRequestAccepted:
@@ -280,7 +278,7 @@ end -- Chat
 
 class Request < Identifiable
 attributes
-    status: RequestStatus --= #PENDING
+    status: RequestStatus init: #PENDING
     sentDate: Date
     addressedDate: Date
     recindedDate: Date
@@ -335,8 +333,7 @@ constraints
     -- Only accepted match requests may refer to a match
     inv noMatchUnlessAccepted:
         MatchRequest.allInstances->forAll(mr |
-            (mr.status = #ACCEPTED and mr.match->size() = 1) or
-            (mr.status <> #ACCEPTED and mr.match->size() = 0))
+            (mr.status = #ACCEPTED and mr.match->size() = 1) or mr.match->size() = 0)
 
     -- Accepted match type must match requested match type
     inv matchTypeMatchesRequestedMatchType:
@@ -419,12 +416,13 @@ constraints
 
                     -- Get all slots in the play range and slots adjoining each end
                     mainWordSlots = allSlots->select(s | s.row = startRow and
-                        s.column >= (startCol - 1) and s.column <= (endCol + 1)),
+                        s.column >= (startCol - 1) and s.column <= (endCol + 1))->sortBy(s | s.column),
 
                     nextLetter = 0,
                     mainWord = mainWordSlots->iterate(s; word:String = ''|
                         if s.tile->isEmpty() then
                             if s.column >= startCol and s.column <= endCol then
+                                let
                                 word.concat(tiles->at(nextLetter).letter.letter)
                                 nextLetter = nextLetter + 1
                             else '' endif
@@ -476,21 +474,17 @@ constraints
 
                     allSpeltWords = mainWord->union(secondaryWords),
 
-                    --allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
-                    --    words->union(Set{w->iterate(l; word:String = '' |
-                    --        word->concat(l.letter)
-                    --    )})
-                    --),
-                    allValidWords = match.dictionary.word->collect(w |
-                        w->iterate(l; word:String = '' | word->concat(l.letter))),
+                    allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
+                        words->including(w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        ))
+                    ),
 
-                    --allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
-                    --    words->union(Set{w->iterate(l; word:String = '' |
-                    --        word->concat(l.letter)
-                    --    )})
-                    --)
-                    allLinkedWords = words->collect(w |
-                        w->iterate(l; word:String = '' | word->concat(l.letter))),
+                    allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
+                        words->including(w->iterate(l; word:String = '' |
+                            word->concat(l.letter)
+                        ))
+                    )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
             else true endif
@@ -559,15 +553,15 @@ constraints
                     allSpeltWords = mainWord->union(secondaryWords),
 
                     allValidWords = match.dictionary.word->iterate(w; words:Set(String) = Set{} |
-                        words->union(Set{w->iterate(l; word:String = '' |
+                        words->including(w->iterate(l; word:String = '' |
                             word->concat(l.letter)
-                        )})
+                        ))
                     ),
 
                     allLinkedWords = words->iterate(w; words:Set(String) = Set{} |
-                        words->union(Set{w->iterate(l; word:String = '' |
+                        words->including(w->iterate(l; word:String = '' |
                             word->concat(l.letter)
-                        )})
+                        ))
                     )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
@@ -575,21 +569,21 @@ constraints
         else true endif
     */
 
-    -- #TODO
-    -- Check to ensure that the player's match stats are updated properly
-    --inv :
-
     -- Verify that a bonus is to be applied
     inv bonusCorrectlyFlagged:
         words.category->includes(match.category) and bonusApplied
 
-    -- #TODO
     -- Score calculation verification
     inv scoreCorrectlyCalculated:
         let
             multiplier = if bonusApplied then 1.5 else 1 endif,
-            scoreCheck = 0
-        in score = scoreCheck
+            tiles = rack.tiles->union(match.board.slots.tile)->asSet(),
+            flatScore = words->iterate(w; ans:Integer = 0 |
+                    ans + w.letters->iterate(l; ws:Integer = 0 |
+                        ws + tiles->one(t | t.letter.letter = l.letter).points
+                    )
+                )
+        in score = if bonusApplied then (flatScore * multiplier) else flatScore endif
 end -- Play
 
 class Board
@@ -672,6 +666,12 @@ constraints
             previousPlays = playHistory->subOrderedSet(0, i)
         in playHistory->first() <> p implies
             previousPlays->forAll(prevP | prevP.time < p.time))
+
+    -- First word must be spelt in the center
+    inv firstPlayStartsAtCentre:
+        let
+            firstPlay = playHistory->first()
+        in (firstPlay.startRow = 8 and firstPlay.startCol = 8)
 
     -- Plays must alternate between players, ie the game should be turn based
     inv playsAlternateBetweenPlayers:
@@ -764,8 +764,8 @@ constraints
     -- Players must be similar rank
     inv similarRank:
         players.rank->forAll(p1, p2 |
-            type = #RANKED and (p1.placement - p2.placement).abs() <= 100 or
-            type <> #RANKED and (p1.placement - p2.placement).abs() <= 200)
+            (type = #RANKED and (p1.placement - p2.placement).abs() <= 100) or
+            p1.placement - p2.placement).abs() <= 200
 
     -- Once a player quits the match must end
     inv matchEndIfQuit: 
