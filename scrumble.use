@@ -4,7 +4,7 @@ enum PlayerStatus {ONLINE, OFFLINE, AWAY, PLAYING}
 enum ProfileState {PRIVATE, PUBLIC}
 enum MatchType {RANKED, UNRANKED}
 enum Category {ANIMAL, MUSIC, MOVIES, FOOD, BOOKS, COUNTRIES, NONE}
-enum PlayType {PLAY, PASS}
+enum PlayType {PLAY, PASS, QUIT}
 enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED, LOST}
 enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
@@ -183,42 +183,63 @@ constraints
             r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
         )
 
+    -- #TODO
     -- Can only exchange match requests among friends
-    --inv onlyFriendsExchangeMatchRequests:
+    inv onlyFriendsExchangeMatchRequests:
         let
-            frReqsAccepted = sentReqs->select(req |
-                req.type = #FRIEND and req.status = #ACCEPTED),
-            acceptedFrReqs = rcvdReqs->select(req |
-                req.type = #FRIEND and req.status = #ACCEPTED),
-            rcvdMatchReqs = rcvdReqs->select(req | req.type = #MATCH),
-            validMatchReq = rcvdMatchReqs->select(mr |
-                    (frReqsAccepted.reqRcvr->includes(mr.reqSender) and
-                    mr.date.after(frReqsAccepted.select(fr | fr.reqRcvr = mr.reqSender).date)) or
-                    (frReqsAccepted.reqSender->includes(mr.reqSender) and
-                    mr.date.after(frReqsAccepted.select(fr | fr.reqSender = mr.reqSender).date))
+            frReqsAccepted = sentReqs->select(req | req.type = #FRIEND and
+                Set{#ACCEPTED, #RECINDED}->includes(req.status)),
+            acceptedFrReqs = rcvdReqs->select(req | req.type = #FRIEND and
+                Set{#ACCEPTED, #RECINDED}->includes(req.status))
+        in rcvdReqs->select(req | req.type = #MATCH)->forAll(mr |
+            (frReqsAccepted.reqRcvr->includes(mr.reqSender) and
+            frReqsAccepted->select(req | req.reqRcvr = mr.reqSender)->iterate(req; ans:Boolean = false |
+                ans or ((req.status = #ACCEPTED and mr.sentDate.after(req.addressedDate)) or
+                    (req.status = #RECINDED and mr.sentDate.after(req.addressedDate) and
+                        mr.sentDate.before(req.recindedDate)))
                 )
-        in rcvdMatchReqs->forAll(mr | validMatchReq->includes(req.reqSender))
+            ) or
+            (acceptedFrReqs.reqSender->includes(mr.reqSender) and
+            acceptedFrReqs->select(req | req.reqSender = mr.reqSender)->iterate(req; ans:Boolean = false |
+                ans or ((req.status = #ACCEPTED and mr.sentDate.after(req.addressedDate)) or
+                    (req.status = #RECINDED and mr.sentDate.after(req.addressedDate) and
+                        mr.sentDate.before(req.recindedDate)))
+                )
+            )
+        )
 
     -- #TODO
     -- Can only chat if one player has accepted a message or friend request
     -- from the other player
-    --inv onlyChatIfRequestAccepted:
-    --    let
-    --        senderFriends = msgSender.sentReqs->select(r |
-    --            r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
-    --                msgSender.rcvdReqs->select(r |
-    --                    r.type = #FRIEND and r.status = #ACCEPTED).reqSender),
-    --        rcvrFriends = msgRcvr.sentReqs->select(r |
-    --            r.type = #FRIEND and r.status = #ACCEPTED).reqRcvr->union(
-    --                msgRcvr.rcvdReqs->select(r |
-    --                    r.type = #FRIEND and r.status = #ACCEPTED).reqSender)
-    --    in senderFriends->includes(msgRcvr) or 
-    --        rcvrFriends->includes(msgSender)
+    inv onlyChatIfRequestAccepted:
+        let
+            reqsAccepted = sentReqs->select(req |
+                Set{#FRIEND, #MESSAGE}->includes(req.type) and
+                Set{#ACCEPTED, #RECINDED}->includes(req.status)),
+            acceptedReqs = rcvdReqs->select(req |
+                Set{#FRIEND, #MESSAGE}->includes(req.type) and
+                Set{#ACCEPTED, #RECINDED}->includes(req.status))
+        in rcvdMsgs->forAll(m |
+            (reqsAccepted.reqRcvr->includes(m.msgSender) and
+            reqsAccepted->select(req | req.reqRcvr = m.msgSender)->iterate(req; ans:Boolean = false |
+                ans or ((req.status = #ACCEPTED and m.date.after(req.addressedDate)) or
+                    (req.status = #RECINDED and m.date.after(req.addressedDate) and
+                        m.date.before(req.recindedDate)))
+                )
+            ) or
+            (acceptedReqs.reqSender->includes(m.msgSender) and
+            acceptedReqs->select(req | req.reqSender = m.msgSender)->iterate(req; ans:Boolean = false |
+                ans or ((req.status = #ACCEPTED and m.date.after(req.addressedDate)) or
+                    (req.status = #RECINDED and m.date.after(req.addressedDate) and
+                        m.date.before(req.recindedDate)))
+                )
+            )
+        )
 
     -- players in match must have status in game
     inv playerStatusConsistent:
         matchHistory->select(m | m.status = #INPROGRESS)->size() > 0 implies
-        status = #Playing
+        status = #PLAYING
 
     -- Can't play more than one match at a time
     inv onlyPlayingOneOrNoMatches:
@@ -226,10 +247,10 @@ constraints
 
     -- Ensure correct rankings are always assigned
     inv rankIsCorrect:
-        Players.allInstances->forAll(p | p <> self implies (
-            (p.placement > placement implies p.score > score) and
-            (p.placement = placement implies p.score = score) and
-            (p.placement < placement implies p.score < score)))
+        Player.allInstances->forAll(p | p <> self implies (
+            (p.rank.placement > rank.placement and p.score > score) or
+            (p.rank.placement = rank.placement and p.score = score) or
+            (p.rank.placement < rank.placement and p.score < score)))
 end -- Player
 
 class Message < Identifiable
@@ -261,6 +282,8 @@ class Request < Identifiable
 attributes
     status: RequestStatus --= #PENDING
     sentDate: Date
+    addressedDate: Date
+    recindedDate: Date
     type: RequestType
 constraints
     -- For each type of request, senders can only have one pending request
@@ -312,8 +335,8 @@ constraints
     -- Only accepted match requests may refer to a match
     inv noMatchUnlessAccepted:
         MatchRequest.allInstances->forAll(mr |
-            (mr.status = #ACCEPTED implies mr.match->size() = 1) and
-            (mr.status <> #ACCEPTED implies mr.match->size() = 0))
+            (mr.status = #ACCEPTED and mr.match->size() = 1) or
+            (mr.status <> #ACCEPTED and mr.match->size() = 0))
 
     -- Accepted match type must match requested match type
     inv matchTypeMatchesRequestedMatchType:
@@ -359,21 +382,21 @@ attributes
 constraints
     -- Plays can only go in one direction
     inv oneDirection:
-        (startRow = endRow implies (endCol - startCol) >= 0) and
-        (startCol = endCol implies (endRow - startRow) >= 0)
+        (startRow = endRow and (endCol - startCol) >= 0) or
+        (startCol = endCol and (endRow - startRow) >= 0)
 
     -- Words must intersect or be spelt right alongside existing words
     -- or from the center of the board if all slots are empty
     inv intersectsWithAnotherWord:
-        (startRow = endRow implies match.board.slots->select(s |
+        (startRow = endRow and match.board.slots->select(s |
             (Set{startRow - 1, startRow + 1}->includes(s.row) and
                 s.column >= startCol and s.column <= endCol)
             or
             (s.row = startRow and
                 Set{startCol - 1, endCol + 1}->includes(s.column))
             ).tile->notEmpty()
-        ) and
-        (startCol = endCol implies match.board.slots.select(s |
+        ) or
+        (startCol = endCol and match.board.slots.select(s |
             (Set{startCol - 1, startCol + 1}->includes(s.column) and
                 s.row >= startRow and s.column <= endRow)
             or
@@ -382,8 +405,8 @@ constraints
             ).tile->notEmpty()
         )
 
-    -- Passed plays cant have any tiles
-    inv passedPlayHasNoTiles: type = #PASS implies tiles->isEmpty()
+    -- Passed plays or match quits cant have any tiles
+    inv passedPlayHasNoTiles: Set{#PASS, #QUIT}->includes(type) implies tiles->isEmpty()
 
     /*
     -- #TODO
@@ -417,8 +440,8 @@ constraints
                             adjBelow = allSlots->select(as |
                                 as.row = (s.row + 1) and as.column = s.column)
                         in s.tile.isEmpty() and s.column >= startCol and s.column <= endCol and
-                            (adjAbove.tile->isEmpty() implies adjBelow.tile->notEmpty()) and
-                            (adjBelow.tile->isEmpty() implies adjAbove.tile->notEmpty())
+                            (adjAbove.tile->isEmpty() and adjBelow.tile->notEmpty()) or
+                            (adjBelow.tile->isEmpty() and adjAbove.tile->notEmpty())
                     ),
 
                     secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
@@ -499,8 +522,8 @@ constraints
                             adjRight = allSlots->select(as |
                                 as.column = (s.column + 1) and as.row = s.row)
                         in s.tile.isEmpty() and s.row >= startRow and s.row <= endRow and
-                            (adjLeft.tile->isEmpty() implies adjRight.tile->notEmpty()) and
-                            (adjRight.tile->isEmpty() implies adjLeft.tile->notEmpty())
+                            (adjLeft.tile->isEmpty() and adjRight.tile->notEmpty()) or
+                            (adjRight.tile->isEmpty() and adjLeft.tile->notEmpty())
                     )
 
                     secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
@@ -558,7 +581,7 @@ constraints
 
     -- Verify that a bonus is to be applied
     inv bonusCorrectlyFlagged:
-        words.category->includes(match.category) implies bonusApplied
+        words.category->includes(match.category) and bonusApplied
 
     -- #TODO
     -- Score calculation verification
@@ -634,6 +657,7 @@ attributes
     type: MatchType
     timed: Boolean
     time: Integer -- Elapsed seconds
+    endTime: Integer -- seconds
     date: Date
     category: Category
     status: MatchStatus
@@ -740,8 +764,23 @@ constraints
     -- Players must be similar rank
     inv similarRank:
         players.rank->forAll(p1, p2 |
-            type = #RANKED implies (p1.placement - p2.placement).abs() <= 100 and
-            type <> #RANKED implies (p1.placement - p2.placement).abs() <= 200)
+            type = #RANKED and (p1.placement - p2.placement).abs() <= 100 or
+            type <> #RANKED and (p1.placement - p2.placement).abs() <= 200)
+
+    -- Once a player quits the match must end
+    inv matchEndIfQuit: 
+        (playHistory->select(p | p.type = #QUIT)->size() <= 1 implies
+            playHistory->last().type = #QUIT) and
+        playHistory->last().type = #QUIT implies status = #ABANDONED
+
+    -- Once a match ends no additional plays can be made
+    inv noPlaysAfterMatchEnd:
+        status = #ABANDONED implies playHistory->last().type = #QUIT and
+        status = #COMPLETE implies playHistory->forAll(p | p.time < endTime)
+
+    -- Once a match ends no additional plays can be made
+    inv matchEndTimeValid:
+        status = #COMPLETE implies (endTime > 0 and endTime < 300) -- 5 minutes
 end -- Match
 
 class Leaderboard
