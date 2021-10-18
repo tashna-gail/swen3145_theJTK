@@ -363,9 +363,6 @@ between
     Match[*] role matchHistory
 end -- Rack
 
--- maybe add a turn attribute so we can track the order better.
--- They're already ordered though so idk. Not a priority anyways
-
 class Play < Identifiable
 attributes
     type: PlayType
@@ -405,7 +402,6 @@ constraints
     -- Passed plays or match quits cant have any tiles
     inv passedPlayHasNoTiles: Set{#PASS, #QUIT}->includes(type) implies tiles->isEmpty()
 
-    -- #TODO
     -- Only valid words may be spelt
     inv allWordsSpeltAreValidAndOnlySpeltWordsAreLinked:
         if type = #PLAY then
