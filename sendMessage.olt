@@ -14,8 +14,8 @@
     <node id="p3d" sizeCalculated="true" type="Object">
         <name>p3d</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>920.9002358403934</x>
-            <y>69.53847619451847</y>
+            <x>113.9002358403934</x>
+            <y>610.5384761945185</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -27,19 +27,19 @@
         </strategy>
         <hidden>false</hidden>
     </node>
-    <node id="p4d" sizeCalculated="true" type="Object">
-        <name>p4d</name>
-        <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>1564.7088359033316</x>
-            <y>422.4551817400179</y>
-        </strategy>
-        <hidden>false</hidden>
-    </node>
     <node id="m1d" sizeCalculated="true" type="Object">
         <name>m1d</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
             <x>668.9834987513575</x>
             <y>99.54096013135478</y>
+        </strategy>
+        <hidden>false</hidden>
+    </node>
+    <node id="p4d" sizeCalculated="true" type="Object">
+        <name>p4d</name>
+        <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
+            <x>757.7088359033316</x>
+            <y>963.4551817400179</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -62,8 +62,8 @@
     <node id="p3" sizeCalculated="true" type="Object">
         <name>p3</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>988.9804707068613</x>
-            <y>64.54741725237477</y>
+            <x>181.9804707068613</x>
+            <y>605.5474172523748</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -78,8 +78,8 @@
     <node id="p4" sizeCalculated="true" type="Object">
         <name>p4</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>1404.2312604334952</x>
-            <y>416.3714142334476</y>
+            <x>597.2312604334952</x>
+            <y>957.3714142334475</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -102,16 +102,16 @@
     <node id="m2" sizeCalculated="true" type="Object">
         <name>m2</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>1036.0259732843172</x>
-            <y>385.46270241675217</y>
+            <x>229.02597328431716</x>
+            <y>926.4627024167521</y>
         </strategy>
         <hidden>false</hidden>
     </node>
     <node id="l2" sizeCalculated="true" type="Object">
         <name>l2</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>955.7392083283453</x>
-            <y>469.87997313836667</y>
+            <x>148.73920832834528</x>
+            <y>1010.8799731383667</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -126,8 +126,8 @@
     <node id="c2" sizeCalculated="true" type="Object">
         <name>c2</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>1382.1791724376133</x>
-            <y>212.65566273032027</y>
+            <x>575.1791724376133</x>
+            <y>753.6556627303203</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -198,8 +198,8 @@
     <node id="m2d" sizeCalculated="true" type="Object">
         <name>m2d</name>
         <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-            <x>1039.1685501231718</x>
-            <y>257.63519907073874</y>
+            <x>232.16855012317183</x>
+            <y>798.6351990707387</y>
         </strategy>
         <hidden>false</hidden>
     </node>
@@ -238,19 +238,17 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::AssociationName"
-                sizeCalculated="true" type="associationName"
+                id="[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::target::multiplicity"
+                sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
-                <name>RecievedMessage</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                <name>*</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
                     <userOffsetX>0.0</userOffsetX>
                     <userOffsetY>0.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::0</related0>
-                        <related1>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::1</related1>
-                    </related>
+                    <attached>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -269,17 +267,19 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::target::multiplicity"
-                sizeCalculated="true" type="multiplicity"
+                id="[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::AssociationName"
+                sizeCalculated="true" type="associationName"
                 userDefined="false" visible="true">
-                <name>*</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                <name>RecievedMessage</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
                     <userOffsetX>0.0</userOffsetX>
                     <userOffsetY>0.0</userOffsetY>
-                    <attached>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::0</related0>
+                        <related1>[RecievedMessage : (msgRcvr:p1, rcvdMsgs:m1)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -321,20 +321,6 @@
         <name>PlayerChat</name>
         <properties>
             <edgeproperty
-                id="[PlayerChat : (chat:c2, messages:m2)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>chat</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>9.0</userOffsetX>
-                    <userOffsetY>12.0</userOffsetY>
-                    <attached>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="[PlayerChat : (chat:c2, messages:m2)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
@@ -350,30 +336,13 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[PlayerChat : (chat:c2, messages:m2)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>PlayerChat</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>25.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::0</related0>
-                        <related1>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::3</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[PlayerChat : (chat:c2, messages:m2)]::target::rolename"
+                id="[PlayerChat : (chat:c2, messages:m2)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>messages {ordered}</name>
+                <name>chat</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>-25.0</userOffsetX>
-                    <userOffsetY>-19.0</userOffsetY>
-                    <attached>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::3</attached>
+                    <userOffsetX>9.0</userOffsetX>
+                    <userOffsetY>12.0</userOffsetY>
+                    <attached>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::0</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>TOP</placement>
@@ -392,6 +361,37 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[PlayerChat : (chat:c2, messages:m2)]::target::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>messages {ordered}</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>-25.0</userOffsetX>
+                    <userOffsetY>-19.0</userOffsetY>
+                    <attached>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::3</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[PlayerChat : (chat:c2, messages:m2)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>PlayerChat</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>25.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::0</related0>
+                        <related1>[PlayerChat : (chat:c2, messages:m2)]::WayPoint::3</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -422,8 +422,8 @@
                 sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
                 <name>1</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-                    <x>1282.0</x>
-                    <y>222.0</y>
+                    <x>475.0</x>
+                    <y>763.0</y>
                 </strategy>
                 <id>1</id>
                 <specialid>0</specialid>
@@ -434,8 +434,8 @@
                 sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
                 <name>2</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-                    <x>1282.0</x>
-                    <y>387.0</y>
+                    <x>475.0</x>
+                    <y>928.0</y>
                 </strategy>
                 <id>2</id>
                 <specialid>0</specialid>
@@ -471,20 +471,6 @@
         <name>ChatRooms</name>
         <properties>
             <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p3)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>chatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>70.0</userOffsetX>
-                    <userOffsetY>10.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="[ChatRooms : (chatRooms:c2, participants:p3)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
@@ -500,19 +486,16 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p3)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>ChatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>16.0</userOffsetX>
-                    <userOffsetY>-24.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::0</related0>
-                        <related1>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::2</related1>
-                    </related>
+                id="[ChatRooms : (chatRooms:c2, participants:p3)]::source::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>chatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>70.0</userOffsetX>
+                    <userOffsetY>10.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -545,6 +528,23 @@
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p3)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>ChatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>16.0</userOffsetX>
+                    <userOffsetY>-24.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::0</related0>
+                        <related1>[ChatRooms : (chatRooms:c2, participants:p3)]::WayPoint::2</related1>
+                    </related>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
         </properties>
         <waypoints>
             <edgeproperty
@@ -572,8 +572,8 @@
                 sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
                 <name>1</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyFixed">
-                    <x>1383.0</x>
-                    <y>160.0</y>
+                    <x>576.0</x>
+                    <y>701.0</y>
                 </strategy>
                 <id>1</id>
                 <specialid>0</specialid>
@@ -604,129 +604,25 @@
         <linkValue>[ChatRooms : (chatRooms:c2, participants:p3)]</linkValue>
     </edge>
     <edge type="BinaryEdge">
-        <source>p3</source>
-        <target>m2</target>
-        <name>SentMessage</name>
-        <properties>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>msgSender</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>11.0</userOffsetX>
-                    <userOffsetY>-3.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::source::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>1</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>SentMessage</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>36.0</userOffsetX>
-                    <userOffsetY>3.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</related0>
-                        <related1>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::target::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>*</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::target::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>sentMsgs</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>6.0</userOffsetX>
-                    <userOffsetY>6.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-        </properties>
-        <waypoints>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0"
-                sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
-                <name>0</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToCorner">
-                    <userOffsetX>137.53729045674368</userOffsetX>
-                    <userOffsetY>136.0</userOffsetY>
-                    <basisDeltaX>ABSOLUTE</basisDeltaX>
-                    <deltaX>0.0</deltaX>
-                    <maxDeltaX>1.7976931348623157E308</maxDeltaX>
-                    <basisDeltaY>ABSOLUTE</basisDeltaY>
-                    <deltaY>0.0</deltaY>
-                    <maxDeltaY>1.7976931348623157E308</maxDeltaY>
-                    <corner>NORTH_WEST</corner>
-                    <relativeNodeId>p3</relativeNodeId>
-                </strategy>
-                <id>0</id>
-                <specialid>1</specialid>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1"
-                sizeCalculated="true" type="WayPoint"
-                userDefined="false" visible="true">
-                <name>1</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyAttachedIntersection">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                </strategy>
-                <id>1</id>
-                <specialid>2</specialid>
-                <hidden>false</hidden>
-            </edgeproperty>
-        </waypoints>
-        <hidden>false</hidden>
-        <linkValue>[SentMessage : (msgSender:p3, sentMsgs:m2)]</linkValue>
-    </edge>
-    <edge type="BinaryEdge">
         <source>p4</source>
         <target>m2</target>
         <name>RecievedMessage</name>
         <properties>
+            <edgeproperty
+                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::source::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
             <edgeproperty
                 id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
@@ -742,14 +638,28 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::source::multiplicity"
+                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::target::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>rcvdMsgs</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>-4.0</userOffsetX>
+                    <userOffsetY>9.0</userOffsetY>
+                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::target::multiplicity"
                 sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
-                <name>1</name>
+                <name>*</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
                     <userOffsetX>0.0</userOffsetX>
                     <userOffsetY>0.0</userOffsetY>
-                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::0</attached>
+                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::1</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
@@ -770,35 +680,6 @@
                         <related0>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::0</related0>
                         <related1>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::1</related1>
                     </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::target::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>*</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::target::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>rcvdMsgs</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>-4.0</userOffsetX>
-                    <userOffsetY>9.0</userOffsetY>
-                    <attached>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -849,24 +730,129 @@
         <linkValue>[RecievedMessage : (msgRcvr:p4, rcvdMsgs:m2)]</linkValue>
     </edge>
     <edge type="BinaryEdge">
-        <source>p2</source>
-        <target>m1</target>
+        <source>p3</source>
+        <target>m2</target>
         <name>SentMessage</name>
         <properties>
             <edgeproperty
-                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::source::rolename"
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
                 <name>msgSender</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>72.0</userOffsetX>
-                    <userOffsetY>11.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::0</attached>
+                    <userOffsetX>70.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>TOP</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::source::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::target::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>*</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::target::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>sentMsgs</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>6.0</userOffsetX>
+                    <userOffsetY>6.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>SentMessage</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>36.0</userOffsetX>
+                    <userOffsetY>3.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0</related0>
+                        <related1>[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1</related1>
+                    </related>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+        </properties>
+        <waypoints>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::0"
+                sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
+                <name>0</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToCorner">
+                    <userOffsetX>137.53729045674368</userOffsetX>
+                    <userOffsetY>136.0</userOffsetY>
+                    <basisDeltaX>ABSOLUTE</basisDeltaX>
+                    <deltaX>0.0</deltaX>
+                    <maxDeltaX>1.7976931348623157E308</maxDeltaX>
+                    <basisDeltaY>ABSOLUTE</basisDeltaY>
+                    <deltaY>0.0</deltaY>
+                    <maxDeltaY>1.7976931348623157E308</maxDeltaY>
+                    <corner>NORTH_WEST</corner>
+                    <relativeNodeId>p3</relativeNodeId>
+                </strategy>
+                <id>0</id>
+                <specialid>1</specialid>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p3, sentMsgs:m2)]::WayPoint::1"
+                sizeCalculated="true" type="WayPoint"
+                userDefined="false" visible="true">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyAttachedIntersection">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                </strategy>
+                <id>1</id>
+                <specialid>2</specialid>
+                <hidden>false</hidden>
+            </edgeproperty>
+        </waypoints>
+        <hidden>false</hidden>
+        <linkValue>[SentMessage : (msgSender:p3, sentMsgs:m2)]</linkValue>
+    </edge>
+    <edge type="BinaryEdge">
+        <source>p2</source>
+        <target>m1</target>
+        <name>SentMessage</name>
+        <properties>
             <edgeproperty
                 id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
@@ -883,30 +869,13 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>SentMessage</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>37.0</userOffsetX>
-                    <userOffsetY>9.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::0</related0>
-                        <related1>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::1</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::target::rolename"
+                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>sentMsgs</name>
+                <name>msgSender</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>59.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::1</attached>
+                    <userOffsetX>70.0</userOffsetX>
+                    <userOffsetY>7.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::0</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>TOP</placement>
@@ -925,6 +894,37 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::target::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>sentMsgs</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>59.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[SentMessage : (msgSender:p2, sentMsgs:m1)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>SentMessage</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>37.0</userOffsetX>
+                    <userOffsetY>9.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::0</related0>
+                        <related1>[SentMessage : (msgSender:p2, sentMsgs:m1)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -975,6 +975,126 @@
         <linkValue>[SentMessage : (msgSender:p2, sentMsgs:m1)]</linkValue>
     </edge>
     <edge type="BinaryEdge">
+        <source>c2</source>
+        <target>p4</target>
+        <name>ChatRooms</name>
+        <properties>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::source::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>*</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::source::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>chatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>68.0</userOffsetX>
+                    <userOffsetY>7.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::target::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>2</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::target::rolename"
+                sizeCalculated="true" type="rolename"
+                userDefined="false" visible="true">
+                <name>participants</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>ChatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>33.0</userOffsetX>
+                    <userOffsetY>3.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</related0>
+                        <related1>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</related1>
+                    </related>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+        </properties>
+        <waypoints>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0"
+                sizeCalculated="true" type="WayPoint"
+                userDefined="false" visible="true">
+                <name>0</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyAttachedIntersection">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                </strategy>
+                <id>0</id>
+                <specialid>1</specialid>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1"
+                sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToCorner">
+                    <userOffsetX>9.147078447942022</userOffsetX>
+                    <userOffsetY>7.0</userOffsetY>
+                    <basisDeltaX>ABSOLUTE</basisDeltaX>
+                    <deltaX>0.0</deltaX>
+                    <maxDeltaX>1.7976931348623157E308</maxDeltaX>
+                    <basisDeltaY>ABSOLUTE</basisDeltaY>
+                    <deltaY>0.0</deltaY>
+                    <maxDeltaY>1.7976931348623157E308</maxDeltaY>
+                    <corner>NORTH_WEST</corner>
+                    <relativeNodeId>p4</relativeNodeId>
+                </strategy>
+                <id>1</id>
+                <specialid>2</specialid>
+                <hidden>false</hidden>
+            </edgeproperty>
+        </waypoints>
+        <hidden>false</hidden>
+        <linkValue>[ChatRooms : (chatRooms:c2, participants:p4)]</linkValue>
+    </edge>
+    <edge type="BinaryEdge">
         <source>c1</source>
         <target>m1</target>
         <name>PlayerChat</name>
@@ -1009,19 +1129,17 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[PlayerChat : (chat:c1, messages:m1)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>PlayerChat</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>34.0</userOffsetX>
-                    <userOffsetY>63.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::0</related0>
-                        <related1>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::2</related1>
-                    </related>
+                id="[PlayerChat : (chat:c1, messages:m1)]::target::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>*</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::2</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1040,17 +1158,19 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[PlayerChat : (chat:c1, messages:m1)]::target::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>*</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::2</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
+                id="[PlayerChat : (chat:c1, messages:m1)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>PlayerChat</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>34.0</userOffsetX>
+                    <userOffsetY>63.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::0</related0>
+                        <related1>[PlayerChat : (chat:c1, messages:m1)]::WayPoint::2</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1099,144 +1219,10 @@
         <linkValue>[PlayerChat : (chat:c1, messages:m1)]</linkValue>
     </edge>
     <edge type="BinaryEdge">
-        <source>c2</source>
-        <target>p4</target>
-        <name>ChatRooms</name>
-        <properties>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>chatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>68.0</userOffsetX>
-                    <userOffsetY>7.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::source::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>*</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>ChatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>33.0</userOffsetX>
-                    <userOffsetY>3.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0</related0>
-                        <related1>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::target::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>2</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::target::rolename"
-                sizeCalculated="true" type="rolename"
-                userDefined="false" visible="true">
-                <name>participants</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-        </properties>
-        <waypoints>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::0"
-                sizeCalculated="true" type="WayPoint"
-                userDefined="false" visible="true">
-                <name>0</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyAttachedIntersection">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                </strategy>
-                <id>0</id>
-                <specialid>1</specialid>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c2, participants:p4)]::WayPoint::1"
-                sizeCalculated="true" type="WayPoint" userDefined="true" visible="true">
-                <name>1</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToCorner">
-                    <userOffsetX>9.147078447942022</userOffsetX>
-                    <userOffsetY>7.0</userOffsetY>
-                    <basisDeltaX>ABSOLUTE</basisDeltaX>
-                    <deltaX>0.0</deltaX>
-                    <maxDeltaX>1.7976931348623157E308</maxDeltaX>
-                    <basisDeltaY>ABSOLUTE</basisDeltaY>
-                    <deltaY>0.0</deltaY>
-                    <maxDeltaY>1.7976931348623157E308</maxDeltaY>
-                    <corner>NORTH_WEST</corner>
-                    <relativeNodeId>p4</relativeNodeId>
-                </strategy>
-                <id>1</id>
-                <specialid>2</specialid>
-                <hidden>false</hidden>
-            </edgeproperty>
-        </waypoints>
-        <hidden>false</hidden>
-        <linkValue>[ChatRooms : (chatRooms:c2, participants:p4)]</linkValue>
-    </edge>
-    <edge type="BinaryEdge">
         <source>c1</source>
         <target>p1</target>
         <name>ChatRooms</name>
         <properties>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c1, participants:p1)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>chatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>13.0</userOffsetX>
-                    <userOffsetY>6.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
             <edgeproperty
                 id="[ChatRooms : (chatRooms:c1, participants:p1)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
@@ -1253,30 +1239,13 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[ChatRooms : (chatRooms:c1, participants:p1)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>ChatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>-21.0</userOffsetX>
-                    <userOffsetY>46.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::0</related0>
-                        <related1>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::2</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="[ChatRooms : (chatRooms:c1, participants:p1)]::target::rolename"
+                id="[ChatRooms : (chatRooms:c1, participants:p1)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>participants</name>
+                <name>chatRooms</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>69.0</userOffsetX>
-                    <userOffsetY>-2.0</userOffsetY>
-                    <attached>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::2</attached>
+                    <userOffsetX>13.0</userOffsetX>
+                    <userOffsetY>6.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::0</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>TOP</placement>
@@ -1295,6 +1264,37 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c1, participants:p1)]::target::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>participants</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>69.0</userOffsetX>
+                    <userOffsetY>-2.0</userOffsetY>
+                    <attached>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::2</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c1, participants:p1)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>ChatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>-21.0</userOffsetX>
+                    <userOffsetY>46.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::0</related0>
+                        <related1>[ChatRooms : (chatRooms:c1, participants:p1)]::WayPoint::2</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1391,23 +1391,6 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="[ChatRooms : (chatRooms:c1, participants:p2)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>ChatRooms</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>-20.0</userOffsetX>
-                    <userOffsetY>28.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>[ChatRooms : (chatRooms:c1, participants:p2)]::WayPoint::0</related0>
-                        <related1>[ChatRooms : (chatRooms:c1, participants:p2)]::WayPoint::2</related1>
-                    </related>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="[ChatRooms : (chatRooms:c1, participants:p2)]::target::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
                 <name>participants</name>
@@ -1433,6 +1416,23 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="[ChatRooms : (chatRooms:c1, participants:p2)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>ChatRooms</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>-20.0</userOffsetX>
+                    <userOffsetY>28.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>[ChatRooms : (chatRooms:c1, participants:p2)]::WayPoint::0</related0>
+                        <related1>[ChatRooms : (chatRooms:c1, participants:p2)]::WayPoint::2</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1493,6 +1493,20 @@
         <name>Rank</name>
         <properties>
             <edgeproperty
+                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::source::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>leaderboard</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>76.0</userOffsetX>
+                    <userOffsetY>5.0</userOffsetY>
+                    <attached>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
                 id="Rank1 [Rank : (leaderboard:l2, players:p3)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
@@ -1508,33 +1522,16 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::source::rolename"
+                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::target::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>leaderboard</name>
+                <name>players {ordered}</name>
                 <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>76.0</userOffsetX>
-                    <userOffsetY>5.0</userOffsetY>
-                    <attached>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::0</attached>
+                    <userOffsetX>8.0</userOffsetX>
+                    <userOffsetY>-3.0</userOffsetY>
+                    <attached>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::1</attached>
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
-                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>Rank</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>23.0</userOffsetX>
-                    <userOffsetY>31.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::0</related0>
-                        <related1>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::1</related1>
-                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1554,16 +1551,19 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::target::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>players {ordered}</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>8.0</userOffsetX>
-                    <userOffsetY>-3.0</userOffsetY>
-                    <attached>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::1</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
+                id="Rank1 [Rank : (leaderboard:l2, players:p3)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>Rank</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>23.0</userOffsetX>
+                    <userOffsetY>31.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::0</related0>
+                        <related1>Rank1 [Rank : (leaderboard:l2, players:p3)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1651,20 +1651,6 @@
         <name>Rank</name>
         <properties>
             <edgeproperty
-                id="Rank3 [Rank : (leaderboard:l1, players:p2)]::source::rolename"
-                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
-                <name>leaderboard</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>1.0</userOffsetX>
-                    <userOffsetY>9.0</userOffsetY>
-                    <attached>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>TOP</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="Rank3 [Rank : (leaderboard:l1, players:p2)]::source::multiplicity"
                 sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
@@ -1680,19 +1666,16 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="Rank3 [Rank : (leaderboard:l1, players:p2)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="false" visible="true">
-                <name>Rank</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::0</related0>
-                        <related1>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::1</related1>
-                    </related>
+                id="Rank3 [Rank : (leaderboard:l1, players:p2)]::source::rolename"
+                sizeCalculated="true" type="rolename" userDefined="true" visible="true">
+                <name>leaderboard</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>1.0</userOffsetX>
+                    <userOffsetY>9.0</userOffsetY>
+                    <attached>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>TOP</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1722,6 +1705,23 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="Rank3 [Rank : (leaderboard:l1, players:p2)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="false" visible="true">
+                <name>Rank</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::0</related0>
+                        <related1>Rank3 [Rank : (leaderboard:l1, players:p2)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1802,21 +1802,6 @@
         <name>Rank</name>
         <properties>
             <edgeproperty
-                id="Rank2 [Rank : (players:p1, leaderboard:l1)]::source::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>1</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="Rank2 [Rank : (players:p1, leaderboard:l1)]::source::rolename"
                 sizeCalculated="true" type="rolename"
                 userDefined="false" visible="true">
@@ -1832,19 +1817,17 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="Rank2 [Rank : (players:p1, leaderboard:l1)]::AssociationName"
-                sizeCalculated="true" type="associationName"
-                userDefined="true" visible="true">
-                <name>Rank</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
-                    <userOffsetX>30.0</userOffsetX>
-                    <userOffsetY>23.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::0</related0>
-                        <related1>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::1</related1>
-                    </related>
+                id="Rank2 [Rank : (players:p1, leaderboard:l1)]::source::multiplicity"
+                sizeCalculated="true" type="multiplicity"
+                userDefined="false" visible="true">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <attached>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1875,6 +1858,23 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="Rank2 [Rank : (players:p1, leaderboard:l1)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="true" visible="true">
+                <name>Rank</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>30.0</userOffsetX>
+                    <userOffsetY>23.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::0</related0>
+                        <related1>Rank2 [Rank : (players:p1, leaderboard:l1)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -1955,21 +1955,6 @@
         <name>Rank</name>
         <properties>
             <edgeproperty
-                id="Rank4 [Rank : (players:p4, leaderboard:l2)]::source::multiplicity"
-                sizeCalculated="true" type="multiplicity"
-                userDefined="false" visible="true">
-                <name>1</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
-                    <userOffsetX>0.0</userOffsetX>
-                    <userOffsetY>0.0</userOffsetY>
-                    <attached>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::0</attached>
-                    <offset_x>8</offset_x>
-                    <offset_y>8</offset_y>
-                    <placement>BOTTOM</placement>
-                </strategy>
-                <hidden>false</hidden>
-            </edgeproperty>
-            <edgeproperty
                 id="Rank4 [Rank : (players:p4, leaderboard:l2)]::source::rolename"
                 sizeCalculated="true" type="rolename" userDefined="true" visible="true">
                 <name>leaderboard</name>
@@ -1984,19 +1969,17 @@
                 <hidden>false</hidden>
             </edgeproperty>
             <edgeproperty
-                id="Rank4 [Rank : (players:p4, leaderboard:l2)]::AssociationName"
-                sizeCalculated="true" type="associationName"
+                id="Rank4 [Rank : (players:p4, leaderboard:l2)]::source::multiplicity"
+                sizeCalculated="true" type="multiplicity"
                 userDefined="false" visible="true">
-                <name>Rank</name>
-                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                <name>1</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyRelativeToAttached">
                     <userOffsetX>0.0</userOffsetX>
                     <userOffsetY>0.0</userOffsetY>
-                    <offsetX>0.0</offsetX>
-                    <offsetY>-10.0</offsetY>
-                    <related length="2">
-                        <related0>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::0</related0>
-                        <related1>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::1</related1>
-                    </related>
+                    <attached>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::0</attached>
+                    <offset_x>8</offset_x>
+                    <offset_y>8</offset_y>
+                    <placement>BOTTOM</placement>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
@@ -2026,6 +2009,23 @@
                     <offset_x>8</offset_x>
                     <offset_y>8</offset_y>
                     <placement>BOTTOM</placement>
+                </strategy>
+                <hidden>false</hidden>
+            </edgeproperty>
+            <edgeproperty
+                id="Rank4 [Rank : (players:p4, leaderboard:l2)]::AssociationName"
+                sizeCalculated="true" type="associationName"
+                userDefined="false" visible="true">
+                <name>Rank</name>
+                <strategy type="org.tzi.use.gui.views.diagrams.elements.positioning.StrategyInBetween">
+                    <userOffsetX>0.0</userOffsetX>
+                    <userOffsetY>0.0</userOffsetY>
+                    <offsetX>0.0</offsetX>
+                    <offsetY>-10.0</offsetY>
+                    <related length="2">
+                        <related0>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::0</related0>
+                        <related1>Rank4 [Rank : (players:p4, leaderboard:l2)]::WayPoint::1</related1>
+                    </related>
                 </strategy>
                 <hidden>false</hidden>
             </edgeproperty>
