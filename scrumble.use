@@ -151,6 +151,10 @@ attributes
     status: PlayerStatus
     state: ProfileState
 constraints
+    -- Each Player has a unique username
+    inv uniqueUsernames: Player.allInstances->forAll(p1, p2 |
+        p1 <> p2 implies p1.username <> p2.username)
+
     -- Blocked players can't be your friends
     inv notFriendAndBlocked:
         let
