@@ -11,19 +11,22 @@ enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
 
 -- #TODO
--- no rank restriction on requested matches
--- fix order checking constraints
--- remove endTime attribute
--- double check the date checking for valid match requests
--- match must be created if accepted
--- change message request to match request
--- change noUntimedRankedMatchRequests to noUntimedRankedMatches
--- add no ranked match requests/ only unranked match requests
--- can't send message requests to friends
--- not matched with blocked players
--- Fix match type matches requested match type
--- no empty messages
--- players cant interact with themselves
+--     no rank restriction on requested matches
+--     fix order checking constraints
+--     remove endTime attribute
+--     double check the date checking for valid match requests
+--     match must be created if accepted
+--     change message request to match request
+--     change noUntimedRankedMatchRequests to noUntimedRankedMatches
+--     add no ranked match requests/ only unranked match requests
+--     can't send message requests to friends
+--     not matched with blocked players
+--     Fix match type matches requested match type
+--     no empty messages
+--     players cant interact with themselves
+--     Add classes to handle game support (claim, claim status enum,
+--         claims can be reporting players or bug reports)
+--     Add attributes to represent the rest of the player's profile data
 
 -- #DESIGN PATTERN REFINEMENTS
 --     Observer Pattern
@@ -49,9 +52,11 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --           anything that generated notifications
 
 --     Singleton Pattern
+--         1 to one associations of the class with itself
 
 -- #ACL REFINEMENTS
---     Role-Based ACL for Admins and users
+--     Role-Based ACL for Admins and users.
+--         Are we going to allow admins to play matches as well?
 
 class Identifiable
 attributes
@@ -421,10 +426,6 @@ context Identifiable
 context Date
     inv dateIsValid: isValid(day, month, year)
 -- End Date Constraints
-
-
-
-
 
 context Player
     -- Each Player has a unique username
