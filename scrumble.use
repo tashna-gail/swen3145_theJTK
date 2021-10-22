@@ -10,13 +10,52 @@ enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
 
+-- #TODO
+-- no rank restriction on requested matches
+-- fix order checking constraints
+-- remove endTime attribute
+-- double check the date checking for valid match requests
+-- match must be created if accepted
+-- change message request to match request
+-- change noUntimedRankedMatchRequests to noUntimedRankedMatches
+-- add no ranked match requests/ only unranked match requests
+-- can't send message requests to friends
+-- not matched with blocked players
+-- Fix match type matches requested match type
+-- no empty messages
+-- players cant interact with themselves
+
+-- #DESIGN PATTERN REFINEMENTS
+--     Observer Pattern
+--         In the observer pattern, observables update observers when they
+--         change creating the effect that the observer is "watching" the
+--         observable. So observables have a list of theit observers and
+--         call a method in the observer to let them know things changed.
+--         The observer would then execute different operations to update
+--         anything else that depends on the state of the observable object.
+
+--     Suggestions for our system:
+--         +------------------------+
+--         | observer    | observes |
+--         +-------------+----------+
+--         | leaderboard | match    |
+--         | player      | match    |
+--         | match       | play     |
+--         | chat        | message  |
+--         +-------------+----------+
+
+--     Note: Player observes match for status updates
+--     Note: If we have notifications then the notification class would observe
+--           anything that generated notifications
+
+--     Singleton Pattern
+
+-- #ACL REFINEMENTS
+--     Role-Based ACL for Admins and users
+
 class Identifiable
 attributes
     id: String
-constraints
-    -- Each item has a unique id
-    inv uniqueIDs: Identifiable.allInstances->forAll(i1, i2 |
-        i1 <> i2 implies i1.id <> i2.id)
 end -- Identifiable
 
 --from Class
@@ -137,9 +176,6 @@ operations
     isValid(d: Integer, m: Integer, y: Integer): Boolean =
         dayValid(d) and monthValid(m) and yearValid(y) and
         dayAndMonthValid(d, m) and (m = 2 implies febValid(d, y))
-
-constraints
-    inv dateIsValid: isValid(day, month, year)
 end -- Date
 
 class Player < Identifiable
@@ -150,7 +186,247 @@ attributes
     score: Integer -- derived
     status: PlayerStatus
     state: ProfileState
+end -- Player
+
+class Message < Identifiable
+attributes
+    message: String
+    date: Date --should be time
+end -- Message
+
+class Chat
+end -- Chat
+
+class Request < Identifiable
+attributes
+    status: RequestStatus init: #PENDING
+    sentDate: Date
+    addressedDate: Date
+    recindedDate: Date
+    type: RequestType
+kend -- Request
+
+class MatchRequest < Request
+attributes
+    matchType: MatchType
+    timed: Boolean
+end -- MatchRequest
+
+associationclass Block
+between
+    Player[*] role player
+    Player[*] role blocked
+attributes
+    date: Date
+    status: BlockStatus
+end -- Block
+
+-------------------Game-------------------
+
+associationclass Rack
+between
+    Player[2] role players
+    Match[*] role matchHistory
+end -- Rack
+
+class Play < Identifiable
+attributes
+    type: PlayType
+    startRow: Integer
+    startCol: Integer
+    endRow: Integer
+    endCol: Integer
+    score: Integer --/score: Integer
+    time: Integer -- Time in seconds between match start and this play
+    bonusApplied: Boolean
+end -- Play
+
+class Board
+attributes
+end -- Board
+
+class Slot
+attributes
+    row: Integer
+    column: Integer
+end -- Slot
+
+class Tile
+attributes
+    points: Integer
+end -- Tile
+
+class Letter
+attributes
+    letter: String
+end -- Letter
+
+class LetterBag
+end -- LetterBag
+
+class Word
+attributes
+    String: Word
+    category:  Category
+end -- Word
+
+class Dictionary
+end -- Dictionary
+
+class Match < Identifiable
+attributes
+    type: MatchType
+    timed: Boolean
+    time: Integer -- Elapsed seconds
+    endTime: Integer -- seconds
+    date: Date
+    category: Category
+    status: MatchStatus
+end -- Match
+
+class Leaderboard
+end -- Leaderboard
+
+associationclass Rank
+between
+    Leaderboard[1]
+    Player[*] role players ordered
+attributes
+    placement: Integer
+end -- Rank
+
+---------------Associations---------------
+
+composition PlayerChat between
+    Chat[1] role chat
+    Message[*] role messages ordered
+end
+
+association ChatRooms between
+    Chat[*] role chatRooms
+    Player[2] role participants
+end
+
+association SentRequest between
+    Player[1] role reqSender
+    Request[*] role sentReqs
+end
+
+association RecievedRequest between
+    Player[1] role reqRcvr
+    Request[*] role rcvdReqs
+end
+
+association RequestMatch between
+    MatchRequest[1] role matchReq
+    Match[0..1]
+end
+
+association SentMessage between
+    Player[1] role msgSender
+    Message[*] role sentMsgs
+end
+
+association RecievedMessage between
+    Player[1] role msgRcvr
+    Message[*] role rcvdMsgs
+end
+
+
+
+association Observes between
+    Leaderboard[1] role observer
+    Match[*] role watches
+end
+
+association MatchGameBoard between
+    Match[1]
+    Board[1]
+end
+
+composition Grid between
+    Board[1]
+    Slot[*] role slots
+end
+
+aggregation Fill between
+    Slot[1]
+    Tile[0..1]
+end
+
+association LetterOptions between
+    LetterBag[1] 
+    Board[1]
+end
+
+aggregation Stock between
+    LetterBag[1]
+    Tile[*] role tiles
+end
+
+association WordCheck between
+    Match[*] role matches
+    Dictionary[1]
+end
+
+association ValidWord between
+    Dictionary[1]
+    Word[*] role words
+end
+
+association Spelling between
+    Word[*] role words
+    Letter[*] role letters ordered
+end
+
+association Spelt between
+    Play[*] role plays
+    Word[*] role words
+end
+
+association Plays between
+    Match[1]
+    Play[*] role playHistory ordered
+end
+
+aggregation Holds between 
+    Rack[1]
+    Tile[0..9] role tiles
+end
+
+association Played between
+    Rack[1]
+    Play[*] role plays
+end
+
+association Uses between
+    Play[1]
+    Tile[0..9] role tiles ordered
+end
+
+association Marked between
+    Tile[*] role tiles
+    Letter[1]
+end
+
+----------------Constraints---------------
+
 constraints
+context Identifiable
+    -- Each item has a unique id
+    inv uniqueIDs: Identifiable.allInstances->forAll(i1, i2 |
+        i1 <> i2 implies i1.id <> i2.id)
+-- End Identifiable Constraints
+
+context Date
+    inv dateIsValid: isValid(day, month, year)
+-- End Date Constraints
+
+
+
+
+
+context Player
     -- Each Player has a unique username
     inv uniqueUsernames: Player.allInstances->forAll(p1, p2 |
         p1 <> p2 implies p1.username <> p2.username)
@@ -253,16 +529,9 @@ constraints
             (p.rank.placement > rank.placement and p.score > score) or
             (p.rank.placement = rank.placement and p.score = score) or
             (p.rank.placement < rank.placement and p.score < score)))
-end -- Player
+-- End Player Constraints
 
-class Message < Identifiable
-attributes
-    message: String
-    date: Date --should be time
-end -- Message
-
-class Chat
-constraints
+context Chat
     -- Chats can only have 2 participants
     inv onlyTwoParticipants:
         let
@@ -278,16 +547,9 @@ constraints
             previousMsgs = messages->subOrderedSet(0, i)
         in messages->first() <> m implies
             previousMsgs->forAll(prevM | prevM.date.before(m.date)))
-end -- Chat
+-- End Chat Constraints
 
-class Request < Identifiable
-attributes
-    status: RequestStatus init: #PENDING
-    sentDate: Date
-    addressedDate: Date
-    recindedDate: Date
-    type: RequestType
-constraints
+context Request
     -- For each type of request, senders can only have one pending request
     -- per receiver
     inv onlyOnePendingReqPerSenderReceiverReqTypeTuple:
@@ -323,13 +585,9 @@ constraints
             accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
         in pending->forAll(p | accepted->forAll(a | 
             p.reqSender <> a.reqSender or p.reqRcvr <> a.reqRcvr))
-end -- Request
+-- End Request Constraints
 
-class MatchRequest < Request
-attributes
-    matchType: MatchType
-    timed: Boolean
-constraints
+context MatchRequest
     -- All message requests have the type #MESSAGE
     inv messageReqTypeIsMsgReq:
         MatchRequest.allInstances->forAll(mr | mr.type = #MESSAGE)
@@ -348,36 +606,9 @@ constraints
 
     -- Only unranked matches may be untimed
     inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
-end -- MatchRequest
+-- End MatchRequest Constraints
 
-associationclass Block
-between
-    Player[*] role player
-    Player[*] role blocked
-attributes
-    date: Date
-    status: BlockStatus
-end -- Block
-
--------------------Game-------------------
-
-associationclass Rack
-between
-    Player[2] role players
-    Match[*] role matchHistory
-end -- Rack
-
-class Play < Identifiable
-attributes
-    type: PlayType
-    startRow: Integer
-    startCol: Integer
-    endRow: Integer
-    endCol: Integer
-    score: Integer --/score: Integer
-    time: Integer -- Time in seconds between match start and this play
-    bonusApplied: Boolean
-constraints
+context Play
     -- Plays can only go in one direction
     inv oneDirection:
         (startRow = endRow and (endCol - startCol) >= 0) or
@@ -587,49 +818,28 @@ constraints
                     )
                 )
         in score = if bonusApplied then (flatScore * multiplier) else flatScore endif
-end -- Play
+-- End Play Constraints
 
-class Board
-attributes
-constraints
+context Board
     -- Must have 15 by 15 slots
     inv boardSizeIsValid: slots->forAll(s |
         s.row > 0 and s.row <= 15 and s.column > 0 and s.column <= 15)
-end -- Board
+-- End Board Constraints
 
-class Slot
-attributes
-    row: Integer
-    column: Integer
-end -- Slot
-
-class Tile
-attributes
-    points: Integer
-constraints
+context Tile
     -- Ensure Tiles have a valid point value
     inv validPoints: points > 0 and points <= 10
-end -- Tile
+-- End Tile Constraints
 
-class Letter
-attributes
-    letter: String
-constraints
+context Letter
     -- Ensure that the letter is valid
     inv validLetter: Set{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
         'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
         'X', 'Y', 'Z'
     }->includes(letter)
-end -- Letter
+-- End Letter Constraints
 
-class LetterBag
-end -- LetterBag
-
-class Word
-attributes
-    String: Word
-    category:  Category
-constraints
+context Word
     -- No duplicate words
     inv uniqueWords: Word.allInstances->forAll(w1, w2 |
             if w1 <> w2 then
@@ -641,24 +851,14 @@ constraints
                 in not word1.equalsIgnoreCase(word2)
             else true endif
         )
-end -- Word
+-- End Word Constraints
 
-class Dictionary
-constraints
+context Dictionary
     -- Only one dictionary for the lifecycle of the system
     inv onlyOneDictionaryInstance: Dictionary.allInstances->size() <= 1
-end -- Dictionary
+-- End Dictionary Constraints
 
-class Match < Identifiable
-attributes
-    type: MatchType
-    timed: Boolean
-    time: Integer -- Elapsed seconds
-    endTime: Integer -- seconds
-    date: Date
-    category: Category
-    status: MatchStatus
-constraints
+context Match
     -- Only unranked matches may be untimed
     inv noUntimedRankedMatchRequests: (type = #RANKED) implies timed
 
@@ -781,135 +981,13 @@ constraints
         status = #ABANDONED implies playHistory->last().type = #QUIT and
         status = #COMPLETE implies playHistory->forAll(p | p.time < endTime)
 
-    -- Once a match ends no additional plays can be made
+    -- Matches can't last longer than 5 min
     inv matchEndTimeValid:
         status = #COMPLETE implies (endTime > 0 and endTime < 300) -- 5 minutes
-end -- Match
+-- End Match Constraints
 
-class Leaderboard
-constraints
+context Leaderboard
     -- Only one Leaderboard for the lifetime of the system
     inv onlyOneLeaderboardInstance: Leaderboard.allInstances->size() <= 1
-end -- Leaderboard
-
-associationclass Rank
-between
-    Leaderboard[1]
-    Player[*] role players ordered
-attributes
-    placement: Integer
-end -- Rank
-
----------------Associations---------------
-
-composition PlayerChat between
-    Chat[1] role chat
-    Message[*] role messages ordered
-end
-
-association ChatRooms between
-    Chat[*] role chatRooms
-    Player[2] role participants
-end
-
-association SentRequest between
-    Player[1] role reqSender
-    Request[*] role sentReqs
-end
-
-association RecievedRequest between
-    Player[1] role reqRcvr
-    Request[*] role rcvdReqs
-end
-
-association RequestMatch between
-    MatchRequest[1] role matchReq
-    Match[0..1]
-end
-
-association SentMessage between
-    Player[1] role msgSender
-    Message[*] role sentMsgs
-end
-
-association RecievedMessage between
-    Player[1] role msgRcvr
-    Message[*] role rcvdMsgs
-end
-
-
-
-association Observes between
-    Leaderboard[1] role observer
-    Match[*] role watches
-end
-
-association MatchGameBoard between
-    Match[1]
-    Board[1]
-end
-
-composition Grid between
-    Board[1]
-    Slot[*] role slots
-end
-
-aggregation Fill between
-    Slot[1]
-    Tile[0..1]
-end
-
-association LetterOptions between
-    LetterBag[1] 
-    Board[1]
-end
-
-aggregation Stock between
-    LetterBag[1]
-    Tile[*] role tiles
-end
-
-association WordCheck between
-    Match[*] role matches
-    Dictionary[1]
-end
-
-association ValidWord between
-    Dictionary[1]
-    Word[*] role words
-end
-
-association Spelling between
-    Word[*] role words
-    Letter[*] role letters ordered
-end
-
-association Spelt between
-    Play[*] role plays
-    Word[*] role words
-end
-
-association Plays between
-    Match[1]
-    Play[*] role playHistory ordered
-end
-
-aggregation Holds between 
-    Rack[1]
-    Tile[0..9] role tiles
-end
-
-association Played between
-    Rack[1]
-    Play[*] role plays
-end
-
-association Uses between
-    Play[1]
-    Tile[0..9] role tiles ordered
-end
-
-association Marked between
-    Tile[*] role tiles
-    Letter[1]
+-- End Leaderboard Constraints
 end
