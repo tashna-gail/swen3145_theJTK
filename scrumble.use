@@ -1,4 +1,8 @@
-model scrumble --name of model
+-- Authors: Jason Hunter,
+--          Kayvia Harriott,
+--          Tashna-Gail Williams
+
+model scrumble
 
 enum PlayerStatus {ONLINE, OFFLINE, AWAY, PLAYING}
 enum ProfileState {PRIVATE, PUBLIC}
@@ -27,6 +31,8 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --     Add classes to handle game support (claim, claim status enum,
 --         claims can be reporting players or bug reports)
 --     Add attributes to represent the rest of the player's profile data
+--     add representations for message states
+--     add different types of notifications
 
 -- #DESIGN PATTERN REFINEMENTS
 --     Observer Pattern
@@ -48,8 +54,8 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --         +-------------+----------+
 
 --     Note: Player observes match for status updates
---     Note: If we have notifications then the notification class would observe
---           anything that generated notifications
+--     Note: If we have notifications then the notification class may need to
+--           observe anything that generated notifications
 
 --     Singleton Pattern
 --         1 to one associations of the class with itself
@@ -58,7 +64,7 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --     Role-Based ACL for Admins and users.
 --         Are we going to allow admins to play matches as well?
 
-class Identifiable
+abstract class Identifiable
 attributes
     id: String
 end -- Identifiable
@@ -78,7 +84,7 @@ operations
     end
 
     pre parametersHaveValidValues: isValid(d, m, y)
-    post attributesCorrectlyUpdated: 
+    post attributesCorrectlyUpdated:
         day = d and month = m and year = y
 
     -- Accessors
@@ -138,7 +144,7 @@ operations
         result = Set{not equals(d), not before(d)}->forAll(t | t = true)
 
     -- returns true if y is a leap year, false otherwise
-    isLeapYear(y: Integer): Boolean = 
+    isLeapYear(y: Integer): Boolean =
         if (y.mod(400) = 0 or (y.mod(100) > 0 and y.mod(4) = 0)) then
                 true
             else
@@ -170,18 +176,18 @@ operations
         (Set{1, 3, 5, 7, 8, 10, 12}->includes(m) implies d < 32)
 
     febValid(d: Integer, y: Integer): Boolean =
-        (isLeapYear(y) implies d <= 29) and 
+        (isLeapYear(y) implies d <= 29) and
         (not isLeapYear(y) implies d <= 28)
     pre dayIsValid: dayValid(d)
     pre yearIsValid: yearValid(y)
     post returnValueIsAccurate: result =
-        (isLeapYear(y) implies d <= 29) and 
+        (isLeapYear(y) implies d <= 29) and
         (not isLeapYear(y) implies d <= 28)
 
     isValid(d: Integer, m: Integer, y: Integer): Boolean =
         dayValid(d) and monthValid(m) and yearValid(y) and
         dayAndMonthValid(d, m) and (m = 2 implies febValid(d, y))
-end -- Date
+end -- Date Class
 
 class Player < Identifiable
 attributes
@@ -191,16 +197,16 @@ attributes
     score: Integer -- derived
     status: PlayerStatus
     state: ProfileState
-end -- Player
+end -- Player Class
 
 class Message < Identifiable
 attributes
     message: String
     date: Date --should be time
-end -- Message
+end -- Message Class
 
 class Chat
-end -- Chat
+end -- Chat Class
 
 class Request < Identifiable
 attributes
@@ -209,13 +215,13 @@ attributes
     addressedDate: Date
     recindedDate: Date
     type: RequestType
-kend -- Request
+end -- Request Class
 
 class MatchRequest < Request
 attributes
     matchType: MatchType
     timed: Boolean
-end -- MatchRequest
+end -- MatchRequest Class
 
 associationclass Block
 between
@@ -224,7 +230,7 @@ between
 attributes
     date: Date
     status: BlockStatus
-end -- Block
+end -- Block Association Class
 
 -------------------Game-------------------
 
@@ -232,7 +238,7 @@ associationclass Rack
 between
     Player[2] role players
     Match[*] role matchHistory
-end -- Rack
+end -- Rack Association Class
 
 class Play < Identifiable
 attributes
@@ -244,39 +250,39 @@ attributes
     score: Integer --/score: Integer
     time: Integer -- Time in seconds between match start and this play
     bonusApplied: Boolean
-end -- Play
+end -- Play Class
 
 class Board
 attributes
-end -- Board
+end -- Board Class
 
 class Slot
 attributes
     row: Integer
     column: Integer
-end -- Slot
+end -- Slot Class
 
 class Tile
 attributes
     points: Integer
-end -- Tile
+end -- Tile Class
 
 class Letter
 attributes
     letter: String
-end -- Letter
+end -- Letter Class
 
 class LetterBag
-end -- LetterBag
+end -- LetterBag Class
 
 class Word
 attributes
     String: Word
     category:  Category
-end -- Word
+end -- Word Class
 
 class Dictionary
-end -- Dictionary
+end -- Dictionary Class
 
 class Match < Identifiable
 attributes
@@ -287,10 +293,10 @@ attributes
     date: Date
     category: Category
     status: MatchStatus
-end -- Match
+end -- Match Class
 
 class Leaderboard
-end -- Leaderboard
+end -- Leaderboard Class
 
 associationclass Rank
 between
@@ -298,121 +304,121 @@ between
     Player[*] role players ordered
 attributes
     placement: Integer
-end -- Rank
+end -- Rank Association Class
 
 ---------------Associations---------------
 
 composition PlayerChat between
     Chat[1] role chat
     Message[*] role messages ordered
-end
+end -- End PlayerChat Composition
 
 association ChatRooms between
     Chat[*] role chatRooms
     Player[2] role participants
-end
+end -- End ChatRooms Association
 
 association SentRequest between
     Player[1] role reqSender
     Request[*] role sentReqs
-end
+end -- End SentRequest Association
 
 association RecievedRequest between
     Player[1] role reqRcvr
     Request[*] role rcvdReqs
-end
+end -- End RecievedRequest Association
 
 association RequestMatch between
     MatchRequest[1] role matchReq
     Match[0..1]
-end
+end -- End RequestMatch Association
 
 association SentMessage between
     Player[1] role msgSender
     Message[*] role sentMsgs
-end
+end -- End SentMessage Association
 
 association RecievedMessage between
     Player[1] role msgRcvr
     Message[*] role rcvdMsgs
-end
+end -- End RecievedMessage Association
 
 
 
 association Observes between
     Leaderboard[1] role observer
     Match[*] role watches
-end
+end -- End Observes Association
 
 association MatchGameBoard between
     Match[1]
     Board[1]
-end
+end -- End MatchGameBoard Association
 
 composition Grid between
     Board[1]
     Slot[*] role slots
-end
+end -- End Grid Composition
 
 aggregation Fill between
     Slot[1]
     Tile[0..1]
-end
+end -- End Fill Aggregation
 
 association LetterOptions between
-    LetterBag[1] 
+    LetterBag[1]
     Board[1]
-end
+end -- End LetterOptions Association
 
 aggregation Stock between
     LetterBag[1]
     Tile[*] role tiles
-end
+end -- End Stock Aggregation
 
 association WordCheck between
     Match[*] role matches
     Dictionary[1]
-end
+end -- End WordCheck Association
 
 association ValidWord between
     Dictionary[1]
     Word[*] role words
-end
+end -- End ValidWord Association
 
 association Spelling between
     Word[*] role words
     Letter[*] role letters ordered
-end
+end -- End Spelling Association
 
 association Spelt between
     Play[*] role plays
     Word[*] role words
-end
+end -- End Spelt Association
 
 association Plays between
     Match[1]
     Play[*] role playHistory ordered
-end
+end -- End Plays Association
 
-aggregation Holds between 
+aggregation Holds between
     Rack[1]
     Tile[0..9] role tiles
-end
+end -- End Holds Aggregation
 
 association Played between
     Rack[1]
     Play[*] role plays
-end
+end -- End Played Association
 
 association Uses between
     Play[1]
     Tile[0..9] role tiles ordered
-end
+end -- End Uses Association
 
 association Marked between
     Tile[*] role tiles
     Letter[1]
-end
+end -- End Marked Association
 
 ----------------Constraints---------------
 
@@ -538,7 +544,7 @@ context Chat
         let
             senders = messages.msgSender->asSet(),
             recipients = messages.msgRcvr->asSet()
-        in participants->includesAll(senders) and 
+        in participants->includesAll(senders) and
             participants->includesAll(recipients)
 
     -- Messages must be ordered
@@ -584,7 +590,7 @@ context Request
                 Set{#FRIEND, #MESSAGE}->includes(req.type)),
             pending = frAndMsgReqs->select(req | req.status = #PENDING),
             accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
-        in pending->forAll(p | accepted->forAll(a | 
+        in pending->forAll(p | accepted->forAll(a |
             p.reqSender <> a.reqSender or p.reqRcvr <> a.reqRcvr))
 -- End Request Constraints
 
@@ -991,4 +997,4 @@ context Leaderboard
     -- Only one Leaderboard for the lifetime of the system
     inv onlyOneLeaderboardInstance: Leaderboard.allInstances->size() <= 1
 -- End Leaderboard Constraints
-end
+-- End All Constraints
