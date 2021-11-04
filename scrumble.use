@@ -18,20 +18,23 @@ enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
 
 --! @TODO:
---!     double check the date checking for valid match requests
+--!     For these 2 I'm thinking to add a period class to represent the
+--!     duration the request was accepted for and allow periods to have no end
+--!     date
+--!     1. double check the date checking for valid match requests
+--!     2. accepted requests must not have a recinded date
+--!
+--!     messages and requests must have a sent date
 --!     match must be created if accepted
---!     change message request to match request
---!     change noUntimedRankedMatchRequests to noUntimedRankedMatches
 --!     add no ranked match requests/ only unranked match requests
---!     can't send message requests to friends
 --!     not matched with blocked players
 --!     no empty messages
 --!     players cant interact with themselves
 --!     Add classes to handle game support (claim, claim status enum,
 --!         claims can be reporting players or bug reports)
 --!     Add attributes to represent the rest of the player's profile data
---!     add representations for message states
---!     add different types of notifications
+--!     add representations for message states (unseen, seen)
+--!     add different types of notifications (As suggested from Ourvle QNA)
 --!
 --!     DESIGN PATTERN REFINEMENTS
 --!         Observer Pattern
@@ -464,7 +467,8 @@ context Player
         ))
 
     -- There must not be any pending friend or message requests between a
-    -- given pair of players if there exists an accepted request between them
+    -- given pair of players if there exists an accepted request of the same
+    -- type between them
     inv noPendingFriendOrMsgReqsIfAccepted:
         let
             allReqs = sentReqs->union(rcvdReqs),
@@ -488,9 +492,21 @@ context Player
                 req.status = #ACCEPTED),
             msgReqs = allReqs->select(req | req.type = #MESSAGE and
                 Set{#PENDING, #ACCEPTED}->includes(req.status))
-        in frReqs->forAll(f | msgReqs->forAll(m |
-            (Set{f.reqSender, f.reqRcvr} -
-                Set{m.reqSender, m.reqRcvr})->size() > 0
+        in frReqs->forAll(f | not msgReqs->exists(m |
+            Set{f.reqSender, f.reqRcvr} = Set{m.reqSender, m.reqRcvr}
+        ))
+
+    -- For a given pair or players, there must not be any pending or accepted
+    -- message requests between them if there exists an accepted friend
+    -- request between them
+    inv onlyOneAcceptedMsgOrFriendReqPerPair:
+        let
+            acceptedReqs = sentReqs->union(rcvdReqs)->select(req |
+                req.status = #ACCEPTED and
+                Set{#FRIEND,#MESSAGE}->includes(req.type))
+        in acceptedReqs->forAll(a1 | not acceptedReqs->exists(a2 |
+            a1 <> a2 and a1.type = a2.type and
+                Set{a1.reqSender, a1.reqRcvr} = Set{a2.reqSender, a2.reqRcvr}
         ))
 
     -- Can only exchange match requests among friends
@@ -500,14 +516,13 @@ context Player
             frReqs = allReqs->select(req | req.type = #FRIEND and
                 Set{#ACCEPTED, #RECINDED}->includes(req.status)),
             matchReqs = allReqs->select(req | req.type = #MATCH)
-        in matchReqs->forAll(mr | frReqs->forAll(fr |
-            (Set{fr.reqSender, fr.reqRcvr} -
-                Set{mr.reqSender, mr.reqRcvr})->size = 0 implies (
-                    (fr.status = #ACCEPTED and
-                        mr.sentDate.after(fr.addressedDate)) or
-                    (fr.status = #RECINDED and
-                        mr.sentDate.after(fr.addressedDate) and
-                        mr.sentDate.before(fr.recindedDate))
+        in matchReqs->forAll(mr | frReqs->exists(fr |
+            Set{fr.reqSender, fr.reqRcvr} = Set{mr.reqSender, mr.reqRcvr} and
+                ((fr.status = #ACCEPTED and
+                    mr.sentDate.after(fr.addressedDate)) or
+                (fr.status = #RECINDED and
+                    mr.sentDate.after(fr.addressedDate) and
+                    mr.sentDate.before(fr.recindedDate))
                 )
         ))
 
@@ -519,14 +534,13 @@ context Player
             frAndMsgReqs = allReqs->select(req |
                 Set{#FRIEND, #MESSAGE}->includes(req.type) and
                 Set{#ACCEPTED, #RECINDED}->includes(req.status))
-        in rcvdMsgs->forAll(m | frAndMsgReqs->forAll(req |
-            (Set{req.reqSender, req.reqRcvr} -
-                Set{m.msgSender, m.msgRcvr})->size = 0 implies (
-                    (req.status = #ACCEPTED and
-                        m.date.after(req.addressedDate)) or
-                    (req.status = #RECINDED and
-                        m.date.after(req.addressedDate) and
-                        m.date.before(req.recindedDate))
+        in rcvdMsgs->forAll(m | frAndMsgReqs->exists(req |
+            Set{req.reqSender, req.reqRcvr} = Set{m.msgSender, m.msgRcvr} and
+                ((req.status = #ACCEPTED and
+                    m.date.after(req.addressedDate)) or
+                (req.status = #RECINDED and
+                    m.date.after(req.addressedDate) and
+                    m.date.before(req.recindedDate))
                 )
         ))
 
@@ -573,35 +587,6 @@ context Request
                 (r1.reqSender <> r2.reqSender and r1.reqRcvr <> r2.reqRcvr) or
                 (r1.reqSender <> r2.reqRcvr and r1.reqSender <> r2.reqRcvr))
         )
-
-    -- -- For friend or message requests, there must not be any pending requests
-    -- -- between a given pair of players if there exists an accepted request
-    -- -- between them
-    -- inv noPendingFriendOrMsgRequestsIfAccepted:
-    --     let
-    --         frAndMsgReqs = Request.allInstances->select(req |
-    --             Set{#FRIEND, #MESSAGE}->includes(req.type)),
-    --         pending = frAndMsgReqs->select(req | req.status = #PENDING),
-    --         accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
-    --     in pending->forAll(p | accepted->forAll(a |
-    --         (p.reqSender <> a.reqSender and p.reqRcvr <> a.reqRcvr) or
-    --         (p.reqSender <> a.reqRcvr and p.reqSender <> a.reqRcvr)
-    --     ))
-
-    -- -- For a given pair or players, there may not be any pending or accepted
-    -- -- message requests between them if there exists an accepted friend
-    -- -- request between them
-    -- inv noMsgReqIfFriendReqAccepted:
-    --     let
-    --         frReqs = Request.allInstances->select(req | req.type = #FRIEND and
-    --             req.status = #ACCEPTED),
-    --         msgReqs = Request.allInstances->select(req |
-    --             req.type = #MESSAGE and
-    --             Set{#PENDING, #ACCEPTED}->includes(req.status))
-    --     in frReqs->forAll(f | msgReqs->forAll(m |
-    --         (f.reqSender <> m.reqSender and f.reqRcvr <> m.reqRcvr) or
-    --         (f.reqSender <> m.reqRcvr and f.reqSender <> m.reqRcvr)
-    --     ))
 -- End Request Constraints
 
 context MatchRequest
