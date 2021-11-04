@@ -1,6 +1,9 @@
--- Authors: Jason Hunter,
---          Kayvia Harriott,
---          Tashna-Gail Williams
+------------------------------------------------------------------------------
+--! @authors: Jason Hunter, Kayvia Harriott, Tashna-Gail Williams
+--! Created on: 2021-10-11
+--! @version: 0.3
+--! Last Updated: 2021-11-03 11:46:01
+------------------------------------------------------------------------------
 
 model scrumble
 
@@ -14,55 +17,52 @@ enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
 
--- #TODO
---     no rank restriction on requested matches
---     fix order checking constraints
---     remove endTime attribute
---     double check the date checking for valid match requests
---     match must be created if accepted
---     change message request to match request
---     change noUntimedRankedMatchRequests to noUntimedRankedMatches
---     add no ranked match requests/ only unranked match requests
---     can't send message requests to friends
---     not matched with blocked players
---     Fix match type matches requested match type
---     no empty messages
---     players cant interact with themselves
---     Add classes to handle game support (claim, claim status enum,
---         claims can be reporting players or bug reports)
---     Add attributes to represent the rest of the player's profile data
---     add representations for message states
---     add different types of notifications
-
--- #DESIGN PATTERN REFINEMENTS
---     Observer Pattern
---         In the observer pattern, observables update observers when they
---         change creating the effect that the observer is "watching" the
---         observable. So observables have a list of theit observers and
---         call a method in the observer to let them know things changed.
---         The observer would then execute different operations to update
---         anything else that depends on the state of the observable object.
-
---     Suggestions for our system:
---         +------------------------+
---         | observer    | observes |
---         +-------------+----------+
---         | leaderboard | match    |
---         | player      | match    |
---         | match       | play     |
---         | chat        | message  |
---         +-------------+----------+
-
---     Note: Player observes match for status updates
---     Note: If we have notifications then the notification class may need to
---           observe anything that generated notifications
-
---     Singleton Pattern
---         1 to one associations of the class with itself
-
--- #ACL REFINEMENTS
---     Role-Based ACL for Admins and users.
---         Are we going to allow admins to play matches as well?
+--! @TODO:
+--!     double check the date checking for valid match requests
+--!     match must be created if accepted
+--!     change message request to match request
+--!     change noUntimedRankedMatchRequests to noUntimedRankedMatches
+--!     add no ranked match requests/ only unranked match requests
+--!     can't send message requests to friends
+--!     not matched with blocked players
+--!     no empty messages
+--!     players cant interact with themselves
+--!     Add classes to handle game support (claim, claim status enum,
+--!         claims can be reporting players or bug reports)
+--!     Add attributes to represent the rest of the player's profile data
+--!     add representations for message states
+--!     add different types of notifications
+--!
+--!     DESIGN PATTERN REFINEMENTS
+--!         Observer Pattern
+--!             In the observer pattern, observables update observers when
+--!             they change creating the effect that the observer is
+--!             "watching" the observable. So observables have a list of their
+--!             observers and call a method in the observer to let them know
+--!             things changed. The observer would then execute different
+--!             operations to update anything else that depends on the state
+--!             of the observable object.
+--!
+--!         Suggestions for our system:
+--!             +------------------------+
+--!             | observer    | observes |
+--!             +-------------+----------+
+--!             | leaderboard | match    |
+--!             | player      | match    |
+--!             | match       | play     |
+--!             | chat        | message  |
+--!             +-------------+----------+
+--!
+--!         Note: Player observes match for status updates
+--!         Note: If we have notifications then the notification class may
+--!               need to observe anything that generated notifications
+--!
+--!         Singleton Pattern
+--!             1 to one associations of the class with itself
+--!
+--!     ACL REFINEMENTS
+--!         Role-Based ACL for Admins and users.
+--!             Are we going to allow admins to play matches as well?
 
 abstract class Identifiable
 attributes
@@ -112,7 +112,8 @@ operations
     isInitialised(): Boolean = day <> null and month <> null and
         year <> null
     post returnValueIsAccurate:
-        result = Set{day <> null, month <> null, year <> null}->forAll(t | t = true)
+        result = Set{day <> null, month <> null, year <> null}
+            ->forAll(t | t = true)
 
     -- returns true if self is before d, false otherwise
     before(d: Date): Boolean = ((year < d.year) or
@@ -133,7 +134,8 @@ operations
     pre bothAreValid: isValid(day, month, year) and
         isValid(d.day, d.month, d.year)
     post returnValueConditions:
-        result = Set{day = d.day, month = d.month, year = d.year}->forAll(t | t = true)
+        result = Set{day = d.day, month = d.month, year = d.year}
+            ->forAll(t | t = true)
 
     -- returns true if self is after d, false otherwise
     after(d: Date): Boolean = (not equals(d)) and (not before(d))
@@ -289,7 +291,6 @@ attributes
     type: MatchType
     timed: Boolean
     time: Integer -- Elapsed seconds
-    endTime: Integer -- seconds
     date: Date
     category: Category
     status: MatchStatus
@@ -479,17 +480,25 @@ context Player
                 Set{#ACCEPTED, #RECINDED}->includes(req.status))
         in rcvdReqs->select(req | req.type = #MATCH)->forAll(mr |
             (frReqsAccepted.reqRcvr->includes(mr.reqSender) and
-            frReqsAccepted->select(req | req.reqRcvr = mr.reqSender)->iterate(req; ans:Boolean = false |
-                ans or ((req.status = #ACCEPTED and mr.sentDate.after(req.addressedDate)) or
-                    (req.status = #RECINDED and mr.sentDate.after(req.addressedDate) and
-                        mr.sentDate.before(req.recindedDate)))
+            frReqsAccepted->select(req | req.reqRcvr = mr.reqSender)
+                ->iterate(req; ans:Boolean = false |
+                    ans or (
+                        (req.status = #ACCEPTED and
+                            mr.sentDate.after(req.addressedDate)) or
+                        (req.status = #RECINDED and
+                            mr.sentDate.after(req.addressedDate) and
+                            mr.sentDate.before(req.recindedDate)))
                 )
             ) or
             (acceptedFrReqs.reqSender->includes(mr.reqSender) and
-            acceptedFrReqs->select(req | req.reqSender = mr.reqSender)->iterate(req; ans:Boolean = false |
-                ans or ((req.status = #ACCEPTED and mr.sentDate.after(req.addressedDate)) or
-                    (req.status = #RECINDED and mr.sentDate.after(req.addressedDate) and
-                        mr.sentDate.before(req.recindedDate)))
+            acceptedFrReqs->select(req | req.reqSender = mr.reqSender)
+                ->iterate(req; ans:Boolean = false |
+                    ans or (
+                        (req.status = #ACCEPTED and
+                            mr.sentDate.after(req.addressedDate)) or
+                        (req.status = #RECINDED and
+                            mr.sentDate.after(req.addressedDate) and
+                            mr.sentDate.before(req.recindedDate)))
                 )
             )
         )
@@ -506,17 +515,25 @@ context Player
                 Set{#ACCEPTED, #RECINDED}->includes(req.status))
         in rcvdMsgs->forAll(m |
             (reqsAccepted.reqRcvr->includes(m.msgSender) and
-            reqsAccepted->select(req | req.reqRcvr = m.msgSender)->iterate(req; ans:Boolean = false |
-                ans or ((req.status = #ACCEPTED and m.date.after(req.addressedDate)) or
-                    (req.status = #RECINDED and m.date.after(req.addressedDate) and
-                        m.date.before(req.recindedDate)))
+            reqsAccepted->select(req | req.reqRcvr = m.msgSender)
+                ->iterate(req; ans:Boolean = false |
+                    ans or (
+                        (req.status = #ACCEPTED and
+                            m.date.after(req.addressedDate)) or
+                        (req.status = #RECINDED and
+                            m.date.after(req.addressedDate) and
+                            m.date.before(req.recindedDate)))
                 )
             ) or
             (acceptedReqs.reqSender->includes(m.msgSender) and
-            acceptedReqs->select(req | req.reqSender = m.msgSender)->iterate(req; ans:Boolean = false |
-                ans or ((req.status = #ACCEPTED and m.date.after(req.addressedDate)) or
-                    (req.status = #RECINDED and m.date.after(req.addressedDate) and
-                        m.date.before(req.recindedDate)))
+            acceptedReqs->select(req | req.reqSender = m.msgSender)
+                ->iterate(req; ans:Boolean = false |
+                    ans or (
+                        (req.status = #ACCEPTED and
+                            m.date.after(req.addressedDate)) or
+                        (req.status = #RECINDED and
+                            m.date.after(req.addressedDate) and
+                            m.date.before(req.recindedDate)))
                 )
             )
         )
@@ -551,68 +568,53 @@ context Chat
     inv messagesAreOrdered: messages->forAll(m |
         let
             i = messages->indexOf(m),
-            previousMsgs = messages->subOrderedSet(0, i)
+            previousMsgs = messages->subOrderedSet(1, i - 1)
         in messages->first() <> m implies
             previousMsgs->forAll(prevM | prevM.date.before(m.date)))
 -- End Chat Constraints
 
 context Request
-    -- For each type of request, senders can only have one pending request
-    -- per receiver
-    inv onlyOnePendingReqPerSenderReceiverReqTypeTuple:
+    -- For each type of request, ther can only be one pending request between
+    -- each unique pair of players.
+    inv onlyOnePendingReqPerPlayerPair:
         let
-            pending = Request.allInstances->select(req | req.status = #PENDING)
-        in pending->forAll(r1, r2 | r1 <> r2 implies
-            (r1.reqSender <> r2.reqSender or r1.reqRcvr <> r2.reqRcvr))
-
-    -- Can only have one friend or message request pending per sender-receiver
-    -- paring
-    inv onlyOnePendingMsgFrReqPerPair:
-        let
-            pending = Request.allInstances->select(req | req.status = #PENDING and
-                Set{#FRIEND, #MESSAGE}->includes(req.type))
+            pending = Request.allInstances->select(req |
+                req.status = #PENDING)
         in pending->forAll(r1, r2 |
-            r1.reqSender <> r2.reqRcvr or r1.reqRcvr <> r2.reqSender)
+            (r1 <> r2 and r1.type = r2.type) implies (
+                (r1.reqSender <> r2.reqSender and r1.reqRcvr <> r2.reqRcvr) or
+                (r1.reqSender <> r2.reqRcvr and r1.reqSender <> r2.reqRcvr))
+        )
 
-    -- Can only accept one friend or message request
-    inv onlyOneAcceptedFriendOrMessageRequest:
-        let
-            pending = Request.allInstances->select(req | req.status = #ACCEPTED and
-                Set{#FRIEND, #MESSAGE}->includes(req.type))
-        in pending->forAll(r1, r2 | r1 <> r2 implies
-            (r1.reqSender <> r2.reqSender or r1.reqRcvr <> r2.reqRcvr))
-
-    -- Can't send any new friend or message requests to a player if
-    -- they already accepted the last one
-    inv noPendingRequestsIfAccepted:
+    -- For friend or message requests, there must not be any pending requests
+    -- between a given pair of players if there exists an accepted request
+    -- between them
+    inv noPendingFriendOrMsgRequestsIfAccepted:
         let
             frAndMsgReqs = Request.allInstances->select(req |
                 Set{#FRIEND, #MESSAGE}->includes(req.type)),
             pending = frAndMsgReqs->select(req | req.status = #PENDING),
             accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
         in pending->forAll(p | accepted->forAll(a |
-            p.reqSender <> a.reqSender or p.reqRcvr <> a.reqRcvr))
+            (p.reqSender <> a.reqSender and p.reqRcvr <> a.reqRcvr) or
+            (p.reqSender <> a.reqRcvr and p.reqSender <> a.reqRcvr)))
 -- End Request Constraints
 
 context MatchRequest
     -- All message requests have the type #MESSAGE
-    inv messageReqTypeIsMsgReq:
-        MatchRequest.allInstances->forAll(mr | mr.type = #MESSAGE)
+    inv matchReqTypeIsMsgReq: type = #MATCH
 
     -- Only accepted match requests may refer to a match
     inv noMatchUnlessAccepted:
-        MatchRequest.allInstances->forAll(mr |
-            (mr.status = #ACCEPTED and mr.match->size() = 1) or mr.match->size() = 0)
+        if status = #ACCEPTED then
+            match->size() = 1
+        else
+            match->size() = 0
+        endif
 
     -- Accepted match type must match requested match type
-    inv matchTypeMatchesRequestedMatchType:
-        MatchRequest.allInstances->forAll(mr |
-            mr.status = #ACCEPTED implies
-                (mr.matchType = mr.match.type) and mr.timed and mr.match.timed
-        )
-
-    -- Only unranked matches may be untimed
-    inv noUntimedRankedMatchRequests: (matchType = #RANKED) implies timed
+    inv matchTypeMatchesRequestedMatchType: status = #ACCEPTED implies
+        ((matchType = match.type) and (timed = match.timed))
 -- End MatchRequest Constraints
 
 context Play
@@ -642,7 +644,8 @@ context Play
         )
 
     -- Passed plays or match quits cant have any tiles
-    inv passedPlayHasNoTiles: Set{#PASS, #QUIT}->includes(type) implies tiles->isEmpty()
+    inv passedPlayHasNoTiles: Set{#PASS, #QUIT}->includes(type) implies
+        tiles->isEmpty()
 
     -- Only valid words may be spelt
     inv allWordsSpeltAreValidAndOnlySpeltWordsAreLinked:
@@ -651,19 +654,28 @@ context Play
                 let
                     allSlots = match.board.slots,
 
-                    -- Get all slots in the play range and slots adjoining each end
-                    mainWordSlots = allSlots->select(s | s.row = startRow and
-                        s.column >= (startCol - 1) and s.column <= (endCol + 1))->sortedBy(s | s.column),
+                    -- Get all slots in the play range and slots adjoining
+                    -- each end
+                    mainWordSlots = allSlots->select(s |
+                        s.row = startRow and s.column >= (startCol - 1) and
+                        s.column <= (endCol + 1))->sortedBy(s | s.column
+                    ),
 
                     mainWord = mainWordSlots->iterate(s; word:String = ''|
                         if s.tile->isEmpty() then
                             if s.column >= startCol and s.column <= endCol then
                                 let
                                     slotIndex = mainWordSlots->indexOf(s),
-                                    visitedSlots = mainWordSlots->subSequence(0, slotIndex),
-                                    nextLetter = visitedSlots->iterate(ws; ans:Integer = 0 |
-                                        if ws.tile->isEmpty() then ans + 1 else ans endif)
-                                in word.concat(tiles->at(nextLetter).letter.letter)
+                                    visitedSlots = mainWordSlots
+                                        ->subSequence(1, slotIndex),
+                                    nextLetter = visitedSlots
+                                        ->iterate(ws; ans:Integer = 0 |
+                                            if ws.tile->isEmpty() then
+                                                ans + 1
+                                            else ans endif
+                                        )
+                                in word.concat(tiles
+                                    ->at(nextLetter).letter.letter)
                             else word endif
                         else
                             word.concat(s.tile.letter.letter)
@@ -676,54 +688,69 @@ context Play
                                 as.row = (s.row - 1) and as.column = s.column),
                             adjBelow = allSlots->select(as |
                                 as.row = (s.row + 1) and as.column = s.column)
-                        in s.tile->isEmpty() and s.column >= startCol and s.column <= endCol and
-                            (adjAbove.tile->isEmpty() and adjBelow.tile->notEmpty()) or
-                            (adjBelow.tile->isEmpty() and adjAbove.tile->notEmpty())
+                        in s.tile->isEmpty() and s.column >= startCol and
+                            s.column <= endCol and
+                            (adjAbove.tile->isEmpty() and
+                                adjBelow.tile->notEmpty()) or
+                            (adjBelow.tile->isEmpty() and
+                                adjAbove.tile->notEmpty())
                     ),
 
-                    secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
-                        let
-                            complete = false,
-
-                            above = allSlots->select(as | as.row = (s.row - 1) and
-                                as.column = s.column).tile->notEmpty(),
-
-                            wordSlots = allSlots->select(ws |
-                                if above and ws.column = s.column then
-                                    ws.row >= s.row
-                                else
-                                    ws.row <= s.row
-                                endif
-                            )->sortedBy(ws | ws.row),
-
-                            wordSlots = if above then wordSlots->reverse() else wordSlots endif
-                        in wordLst->including(wordSlots->iterate(ws; word:String = '' |
+                    secondaryWords = secondaryWordsStart
+                        .iterate(s; wordLst:Set(String) = Set{} |
                             let
-                                complete = ws.tile->isEmpty()
-                            in
-                                if not complete then
-                                    if not above then
-                                        word.concat(ws.tile.letter.letter)
+                                complete = false,
+
+                                above = allSlots->select(as |
+                                    as.row = (s.row - 1) and
+                                    as.column = s.column).tile->notEmpty(),
+
+                                wordSlots = allSlots->select(ws |
+                                    if above and ws.column = s.column then
+                                        ws.row >= s.row
                                     else
-                                        ws.tile.letter.letter.concat(word)
+                                        ws.row <= s.row
                                     endif
-                                else word endif
-                        ))
-                    ),
+                                )->sortedBy(ws | ws.row),
+
+                                wordSlots = if above then
+                                        wordSlots->reverse()
+                                    else wordSlots endif
+                            in wordLst->including(wordSlots
+                                ->iterate(ws; word:String = '' |
+                                    let
+                                        complete = ws.tile->isEmpty()
+                                    in
+                                        if not complete then
+                                            if not above then
+                                                word.concat(ws.tile.letter.letter)
+                                            else
+                                                ws.tile.letter.letter.concat(word)
+                                            endif
+                                        else word endif
+                                )
+                            )
+                        ),
 
                     allSpeltWords = secondaryWords->including(mainWord),
 
-                    allValidWords = match.dictionary.words->iterate(w; wSet:Set(String) = Set{} |
-                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
-                            wordStr.concat(l.letter)
-                        ))
-                    ),
+                    allValidWords = match.dictionary.words
+                        ->iterate(w; wSet:Set(String) = Set{} |
+                            wSet->including(w.letters
+                                ->iterate(l; wordStr:String = '' |
+                                    wordStr.concat(l.letter)
+                                )
+                            )
+                        ),
 
-                    allLinkedWords = words->iterate(w; wSet:Set(String) = Set{} |
-                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
-                            wordStr.concat(l.letter)
-                        ))
-                    )
+                    allLinkedWords = words
+                        ->iterate(w; wSet:Set(String) = Set{} |
+                            wSet->including(w.letters
+                                ->iterate(l; wordStr:String = '' |
+                                    wordStr.concat(l.letter)
+                                )
+                            )
+                        )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
             else false endif
@@ -732,19 +759,26 @@ context Play
                 let
                     allSlots = match.board.slots,
 
-                    -- Get all slots in the play range and slots adjoining each end
-                    mainWordSlots = allSlots->select(s | s.column = startCol and
-                        s.row >= (startRow - 1) and s.row <= (endRow + 1))->sortedBy(s | s.row),
+                    -- Get all slots in the play range and slots adjoining
+                    -- each end
+                    mainWordSlots = allSlots->select(s |
+                        s.column = startCol and s.row >= (startRow - 1) and
+                        s.row <= (endRow + 1))->sortedBy(s | s.row),
 
                     mainWord = mainWordSlots->iterate(s; word:String = ''|
                         if s.tile->isEmpty() then
                             if s.row >= startRow and s.row <= endRow then
                                 let
                                     slotIndex = mainWordSlots->indexOf(s),
-                                    visitedSlots = mainWordSlots->subSequence(0, slotIndex),
-                                    nextLetter = visitedSlots->iterate(ws; ans:Integer = 0 |
-                                        if ws.tile->isEmpty() then ans + 1 else ans endif)
-                                in word.concat(tiles->at(nextLetter).letter.letter)
+                                    visitedSlots = mainWordSlots
+                                        ->subSequence(1, slotIndex),
+                                    nextLetter = visitedSlots
+                                        ->iterate(ws; ans:Integer = 0 |
+                                            if ws.tile->isEmpty() then
+                                                ans + 1
+                                            else ans endif)
+                                in word.concat(tiles
+                                    ->at(nextLetter).letter.letter)
                             else word endif
                         else
                             word.concat(s.tile.letter.letter)
@@ -757,54 +791,69 @@ context Play
                                 as.column = (s.column - 1) and as.row = s.row),
                             adjBelow = allSlots->select(as |
                                 as.column = (s.column + 1) and as.row = s.row)
-                        in s.tile->isEmpty() and s.row >= startRow and s.row <= endRow and
-                            (adjAbove.tile->isEmpty() and adjBelow.tile->notEmpty()) or
-                            (adjBelow.tile->isEmpty() and adjAbove.tile->notEmpty())
+                        in s.tile->isEmpty() and s.row >= startRow and
+                            s.row <= endRow and
+                            (adjAbove.tile->isEmpty() and
+                                adjBelow.tile->notEmpty()) or
+                            (adjBelow.tile->isEmpty() and
+                                adjAbove.tile->notEmpty())
                     ),
 
-                    secondaryWords = secondaryWordsStart.iterate(s; wordLst:Set(String) = Set{} |
-                        let
-                            complete = false,
-
-                            above = allSlots->select(as | as.column = (s.column - 1) and
-                                as.row = s.row).tile->notEmpty(),
-
-                            wordSlots = allSlots->select(ws |
-                                if above and ws.row = s.row then
-                                    ws.column >= s.column
-                                else
-                                    ws.column <= s.column
-                                endif
-                            )->sortedBy(ws | ws.column),
-
-                            wordSlots = if above then wordSlots->reverse() else wordSlots endif
-                        in wordLst->including(wordSlots->iterate(ws; word:String = '' |
+                    secondaryWords = secondaryWordsStart
+                        .iterate(s; wordLst:Set(String) = Set{} |
                             let
-                                complete = ws.tile->isEmpty()
-                            in
-                                if not complete then
-                                    if not above then
-                                        word.concat(ws.tile.letter.letter)
+                                complete = false,
+
+                                above = allSlots->select(as |
+                                    as.column = (s.column - 1) and
+                                    as.row = s.row).tile->notEmpty(),
+
+                                wordSlots = allSlots->select(ws |
+                                    if above and ws.row = s.row then
+                                        ws.column >= s.column
                                     else
-                                        ws.tile.letter.letter.concat(word)
+                                        ws.column <= s.column
                                     endif
-                                else word endif
-                        ))
-                    ),
+                                )->sortedBy(ws | ws.column),
+
+                                wordSlots = if above then
+                                        wordSlots->reverse()
+                                    else wordSlots endif
+                            in wordLst->including(wordSlots
+                                ->iterate(ws; word:String = '' |
+                                    let
+                                        complete = ws.tile->isEmpty()
+                                    in
+                                        if not complete then
+                                            if not above then
+                                                word.concat(ws.tile.letter.letter)
+                                            else
+                                                ws.tile.letter.letter.concat(word)
+                                            endif
+                                        else word endif
+                                )
+                            )
+                        ),
 
                     allSpeltWords = secondaryWords->including(mainWord),
 
-                    allValidWords = match.dictionary.words->iterate(w; wSet:Set(String) = Set{} |
-                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
-                            wordStr.concat(l.letter)
-                        ))
-                    ),
+                    allValidWords = match.dictionary.words
+                        ->iterate(w; wSet:Set(String) = Set{} |
+                            wSet->including(w.letters
+                                ->iterate(l; wordStr:String = '' |
+                                    wordStr.concat(l.letter)
+                                )
+                            )
+                        ),
 
-                    allLinkedWords = words->iterate(w; wSet:Set(String) = Set{} |
-                        wSet->including(w.letters->iterate(l; wordStr:String = '' |
-                            wordStr.concat(l.letter)
-                        ))
-                    )
+                    allLinkedWords = words
+                        ->iterate(w; wSet:Set(String) = Set{} |
+                            wSet->including(w.letters
+                                ->iterate(l; wordStr:String = '' |
+                                    wordStr.concat(l.letter)
+                                )
+                            )
+                        )
                 in allValidWords->includesAll(allSpeltWords) and
                     allSpeltWords->includesAll(allLinkedWords)
             else false endif
@@ -821,10 +870,12 @@ context Play
             tiles = rack.tiles->union(match.board.slots.tile)->asSet(),
             flatScore = words->iterate(w; ans:Integer = 0 |
                     ans + w.letters->iterate(l; ws:Integer = 0 |
-                        ws + tiles->select(t | t.letter.letter = l.letter)->asSequence()->at(0).points
+                        ws + tiles->any(t | t.letter.letter = l.letter).points
                     )
                 )
-        in score = if bonusApplied then (flatScore * multiplier) else flatScore endif
+        in score = if bonusApplied then
+                (flatScore * multiplier)
+            else flatScore endif
 -- End Play Constraints
 
 context Board
@@ -867,13 +918,13 @@ context Dictionary
 
 context Match
     -- Only unranked matches may be untimed
-    inv noUntimedRankedMatchRequests: (type = #RANKED) implies timed
+    inv noUntimedRankedMatches: (type = #RANKED) implies timed
 
     -- Plays must be ordered
     inv playsAreOrdered: playHistory->forAll(p |
         let
             i = playHistory->indexOf(p),
-            previousPlays = playHistory->subOrderedSet(0, i)
+            previousPlays = playHistory->subOrderedSet(1, i - 1)
         in playHistory->first() <> p implies
             previousPlays->forAll(prevP | prevP.time < p.time))
 
@@ -886,15 +937,15 @@ context Match
     -- Plays must alternate between players, ie the game should be turn based
     inv playsAlternateBetweenPlayers:
         let
-            player1 = playHistory->at(0).rack.players,
-            player2 = playHistory->at(1).rack.players
-        in playHistory->iterate(p; result:Boolean = true |
-                if playHistory->indexOf(p).mod(2) = 0 then
-                    result = result and (player1 = p)
-                else
-                    result = result and (player2 = p)
-                endif
-            )
+            player1 = playHistory->at(1).rack.players,
+            player2 = playHistory->at(2).rack.players
+        in playHistory->forAll(p |
+            if playHistory->indexOf(p).mod(2) = 1 then
+                player1 = p
+            else
+                player2 = p
+            endif
+        )
 
     -- Ensure all Tiles with the same letter have the same score
     inv consistentTilePointValues:
@@ -975,7 +1026,9 @@ context Match
     inv similarRank:
         players.rank->forAll(p1, p2 |
             (type = #RANKED and (p1.placement - p2.placement).abs() <= 100) or
-            (p1.placement - p2.placement).abs() <= 200)
+            (matchReq->size() = 0 implies
+                (p1.placement - p2.placement).abs() <= 200)
+        )
 
     -- Once a player quits the match must end
     inv matchEndIfQuit:
@@ -986,11 +1039,12 @@ context Match
     -- Once a match ends no additional plays can be made
     inv noPlaysAfterMatchEnd:
         status = #ABANDONED implies playHistory->last().type = #QUIT and
-        status = #COMPLETE implies playHistory->forAll(p | p.time < endTime)
+        status = #COMPLETE implies playHistory->forAll(p | p.time < time)
 
     -- Matches can't last longer than 5 min
     inv matchEndTimeValid:
-        status = #COMPLETE implies (endTime > 0 and endTime < 300) -- 5 minutes
+        (timed and Set{#COMPLETE, #ABANDONED}->includes(status)) implies
+            (time > 0 and time < 300) -- 5 min
 -- End Match Constraints
 
 context Leaderboard
