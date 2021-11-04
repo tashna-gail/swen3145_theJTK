@@ -1,0 +1,167 @@
+reset
+
+!new Leaderboard('lboard')
+
+!new Player('player1')
+!player1.id := 'player1'
+!player1.username := 'TestUser1'
+!player1.email := 'test1@email.com'
+!player1.status := #ONLINE
+!player1.state := #PRIVATE
+!player1.score := 500
+
+!insert (lboard,player1) into Rank
+!Rank1.placement := 1
+
+!new Player('player2')
+!player2.id := 'player2'
+!player2.username := 'TestUser2'
+!player2.email := 'test2@email.com'
+!player2.status := #ONLINE
+!player2.state := #PRIVATE
+!player2.score := 450
+
+!insert (lboard,player2) into Rank
+!Rank2.placement := 400
+
+--------Friend Request between Players 1 and 2
+
+!new Date('frReq1SentDate')
+!frReq1SentDate.day := 20
+!frReq1SentDate.month := 10
+!frReq1SentDate.year := 2021
+
+!new Date('frReq1AddrDate')
+!frReq1AddrDate.day := 21
+!frReq1AddrDate.month := 10
+!frReq1AddrDate.year := 2021
+
+!new Request('frReq1P1P2')
+!frReq1P1P2.id := 'frReq1'
+!frReq1P1P2.type := #FRIEND
+!frReq1P1P2.status := #ACCEPTED
+!frReq1P1P2.sentDate := frReq1SentDate
+!frReq1P1P2.addressedDate := frReq1AddrDate
+!insert (player1,frReq1P1P2) into SentRequest
+!insert (player2,frReq1P1P2) into RecievedRequest
+
+--------Chat between Players 1 and 2
+
+!new Chat('chatp1p2')
+!insert (chatp1p2,player1) into ChatRooms
+!insert (chatp1p2,player2) into ChatRooms
+
+!new Date('msg1Date')
+!msg1Date.day := 22
+!msg1Date.month := 10
+!msg1Date.year := 2021
+
+!new Message('msg1p1p2')
+!msg1p1p2.id := 'msg1'
+!msg1p1p2.message := 'This is a test'
+!msg1p1p2.date := msg1Date
+!insert (chatp1p2,msg1p1p2) into PlayerChat
+!insert (player1,msg1p1p2) into RecievedMessage
+!insert (player2,msg1p1p2) into SentMessage
+
+!new Date('msg2Date')
+!msg2Date.day := 23
+!msg2Date.month := 10
+!msg2Date.year := 2021
+
+!new Message('msg2p1p2')
+!msg2p1p2.id := 'msg2'
+!msg2p1p2.message := 'tset a si sihT'
+!msg2p1p2.date := msg2Date
+!insert (chatp1p2,msg2p1p2) into PlayerChat
+!insert (player2,msg2p1p2) into RecievedMessage
+!insert (player1,msg2p1p2) into SentMessage
+
+--------Match Request between Players 1 and 2
+
+!new Date('matchReq1SentDate')
+!matchReq1SentDate.day := 22
+!matchReq1SentDate.month := 10
+!matchReq1SentDate.year := 2021
+
+!new MatchRequest('matchReq1')
+!matchReq1.id := 'matchReq1'
+!matchReq1.sentDate := matchReq1SentDate
+!matchReq1.type := #MATCH
+!matchReq1.matchType := #UNRANKED
+!matchReq1.timed := false
+!matchReq1.status := #ACCEPTED
+!insert (player1,matchReq1) into SentRequest
+!insert (player2,matchReq1) into RecievedRequest
+
+--------Match between Player 1 and 2
+
+!new Match('match1')
+!match1.id := 'match1'
+!match1.type := #UNRANKED
+!match1.timed := false
+!match1.time := 35
+!match1.category := #NONE
+!match1.status := #INPROGRESS
+!insert (matchReq1,match1) into RequestMatch
+!insert (player2,match1) into Rack
+!insert (player1,match1) into Rack
+
+!new Board
+!insert (match1,Board1) into MatchGameBoard
+!new LetterBag
+!insert (LetterBag1,Board1) into LetterOptions
+
+!new Play('play1')
+!play1.id := 'm1play1'
+!play1.type := #PLAY
+!play1.startRow := 8
+!play1.startCol := 8
+!play1.endRow := 12
+!play1.endCol := 8
+!play1.score := 7
+!play1.time := 7
+!play1.bonusApplied := false
+!insert (Rack2,play1) into Played
+!insert (match1,play1) into Plays
+
+!new Play('play2')
+!play2.id := 'm1play2'
+!play2.type := #PLAY
+!play2.startRow := 9
+!play2.startCol := 6
+!play2.endRow := 9
+!play2.endCol := 10
+!play2.score := 13
+!play2.time := 15
+!play2.bonusApplied := false
+!insert (Rack1,play2) into Played
+!insert (match1,play2) into Plays
+
+!new Play('play3')
+!play3.id := 'm1play3'
+!play3.type := #PLAY
+!play3.startRow := 12
+!play3.startCol := 9
+!play3.endRow := 12
+!play3.endCol := 14
+!play3.score := 20
+!play3.time := 27
+!play3.bonusApplied := false
+!insert (Rack2,play3) into Played
+!insert (match1,play3) into Plays
+
+!new Play('play4')
+!play4.id := 'm1play4'
+!play4.type := #PLAY
+!play4.startRow := 9
+!play4.startCol := 7
+!play4.endRow := 9
+!play4.endCol := 13
+!play4.score := 10
+!play4.time := 33
+!play4.bonusApplied := false
+!insert (Rack1,play4) into Played
+!insert (match1,play4) into Plays
+
+check
