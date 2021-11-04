@@ -442,117 +442,105 @@ context Player
     -- Blocked players can't be your friends
     inv notFriendAndBlocked:
         let
-            fReqAccepted = sentReqs->select(req |
-                req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
-            acceptedFReq = rcvdReqs->select(req |
-                req.type = #FRIEND and req.status = #ACCEPTED).reqRcvr,
-            friends = fReqAccepted->union(acceptedFReq)
+            allReqs = sentReqs->union(rcvdReqs),
+            acceptedFrReqs = allReqs->select(req | req.type = #FRIEND and
+                req.status = #ACCEPTED),
+            friends = acceptedFrReqs.reqSender->union(acceptedFrReqs.reqRcvr)
+                ->asSet()->excluding(self),
+            blockedLst = block[player]
+                ->select(b | b.status = #BLOCKED).blocked
         in friends->excludesAll(blocked)
 
     -- Cannot send requests to yourself
     inv noSelfRequests: sentReqs.reqRcvr->excludes(self)
 
-    -- Can't receive requests from blocked players
-    inv notReceiveRequestsFromBlocked:
+    -- Can't exchange requests with blocked players
+    inv noRequestsAfterBlocked:
         let
             blocks = block[player]->select(b | b.status = #BLOCKED)
-        in blocks->forAll(b |
-            let
-                requests = rcvdReqs->select(r |
-                    r.sentDate.after(b.date) and r.reqSender = b.blocked)
-            in requests->forAll(req | req.status = #LOST)
-        )
+        in blocks->forAll(b | sentReqs->union(rcvdReqs)->forAll(req |
+            (Set{req.reqSender, req.reqRcvr}->includes(b.blocked) and
+            req.sentDate.after(b.date)) implies req.status = #LOST
+        ))
 
-    -- Can't send requests to blocked players
-    inv notSendRequestsToBlocked:
+    -- There must not be any pending friend or message requests between a
+    -- given pair of players if there exists an accepted request between them
+    inv noPendingFriendOrMsgReqsIfAccepted:
         let
-            blocks = block[player]->select(b | b.status = #BLOCKED)
-        in blocks->forAll(b | sentReqs->select(r |
-            r.sentDate.after(b.date) and r.reqRcvr = b.blocked)->isEmpty()
-        )
+            allReqs = sentReqs->union(rcvdReqs),
+            frAndMsgReqs = allReqs->select(req |
+                Set{#FRIEND, #MESSAGE}->includes(req.type)),
+            pending = frAndMsgReqs->select(req | req.status = #PENDING),
+            accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
+        in pending->forAll(p | accepted->forAll(a |
+            p.type = a.type implies
+                (Set{p.reqSender, p.reqRcvr} -
+                    Set{a.reqSender, a.reqRcvr})->size() > 0
+        ))
+
+    -- For a given pair or players, there may not be any pending or accepted
+    -- message requests between them if there exists an accepted friend
+    -- request between them
+    inv noActiveMsgReqIfFriendReqAccepted:
+        let
+            allReqs = sentReqs->union(rcvdReqs),
+            frReqs = allReqs->select(req | req.type = #FRIEND and
+                req.status = #ACCEPTED),
+            msgReqs = allReqs->select(req | req.type = #MESSAGE and
+                Set{#PENDING, #ACCEPTED}->includes(req.status))
+        in frReqs->forAll(f | msgReqs->forAll(m |
+            (Set{f.reqSender, f.reqRcvr} -
+                Set{m.reqSender, m.reqRcvr})->size() > 0
+        ))
 
     -- Can only exchange match requests among friends
     inv onlyFriendsExchangeMatchRequests:
         let
-            frReqsAccepted = sentReqs->select(req | req.type = #FRIEND and
+            allReqs = sentReqs->union(rcvdReqs),
+            frReqs = allReqs->select(req | req.type = #FRIEND and
                 Set{#ACCEPTED, #RECINDED}->includes(req.status)),
-            acceptedFrReqs = rcvdReqs->select(req | req.type = #FRIEND and
-                Set{#ACCEPTED, #RECINDED}->includes(req.status))
-        in rcvdReqs->select(req | req.type = #MATCH)->forAll(mr |
-            (frReqsAccepted.reqRcvr->includes(mr.reqSender) and
-            frReqsAccepted->select(req | req.reqRcvr = mr.reqSender)
-                ->iterate(req; ans:Boolean = false |
-                    ans or (
-                        (req.status = #ACCEPTED and
-                            mr.sentDate.after(req.addressedDate)) or
-                        (req.status = #RECINDED and
-                            mr.sentDate.after(req.addressedDate) and
-                            mr.sentDate.before(req.recindedDate)))
+            matchReqs = allReqs->select(req | req.type = #MATCH)
+        in matchReqs->forAll(mr | frReqs->forAll(fr |
+            (Set{fr.reqSender, fr.reqRcvr} -
+                Set{mr.reqSender, mr.reqRcvr})->size = 0 implies (
+                    (fr.status = #ACCEPTED and
+                        mr.sentDate.after(fr.addressedDate)) or
+                    (fr.status = #RECINDED and
+                        mr.sentDate.after(fr.addressedDate) and
+                        mr.sentDate.before(fr.recindedDate))
                 )
-            ) or
-            (acceptedFrReqs.reqSender->includes(mr.reqSender) and
-            acceptedFrReqs->select(req | req.reqSender = mr.reqSender)
-                ->iterate(req; ans:Boolean = false |
-                    ans or (
-                        (req.status = #ACCEPTED and
-                            mr.sentDate.after(req.addressedDate)) or
-                        (req.status = #RECINDED and
-                            mr.sentDate.after(req.addressedDate) and
-                            mr.sentDate.before(req.recindedDate)))
-                )
-            )
-        )
+        ))
 
     -- Can only chat if one player has accepted a message or friend request
     -- from the other player
     inv onlyChatIfRequestAccepted:
         let
-            reqsAccepted = sentReqs->select(req |
-                Set{#FRIEND, #MESSAGE}->includes(req.type) and
-                Set{#ACCEPTED, #RECINDED}->includes(req.status)),
-            acceptedReqs = rcvdReqs->select(req |
+            allReqs = sentReqs->union(rcvdReqs),
+            frAndMsgReqs = allReqs->select(req |
                 Set{#FRIEND, #MESSAGE}->includes(req.type) and
                 Set{#ACCEPTED, #RECINDED}->includes(req.status))
-        in rcvdMsgs->forAll(m |
-            (reqsAccepted.reqRcvr->includes(m.msgSender) and
-            reqsAccepted->select(req | req.reqRcvr = m.msgSender)
-                ->iterate(req; ans:Boolean = false |
-                    ans or (
-                        (req.status = #ACCEPTED and
-                            m.date.after(req.addressedDate)) or
-                        (req.status = #RECINDED and
-                            m.date.after(req.addressedDate) and
-                            m.date.before(req.recindedDate)))
+        in rcvdMsgs->forAll(m | frAndMsgReqs->forAll(req |
+            (Set{req.reqSender, req.reqRcvr} -
+                Set{m.msgSender, m.msgRcvr})->size = 0 implies (
+                    (req.status = #ACCEPTED and
+                        m.date.after(req.addressedDate)) or
+                    (req.status = #RECINDED and
+                        m.date.after(req.addressedDate) and
+                        m.date.before(req.recindedDate))
                 )
-            ) or
-            (acceptedReqs.reqSender->includes(m.msgSender) and
-            acceptedReqs->select(req | req.reqSender = m.msgSender)
-                ->iterate(req; ans:Boolean = false |
-                    ans or (
-                        (req.status = #ACCEPTED and
-                            m.date.after(req.addressedDate)) or
-                        (req.status = #RECINDED and
-                            m.date.after(req.addressedDate) and
-                            m.date.before(req.recindedDate)))
-                )
-            )
-        )
+        ))
 
     -- players in match must have status in game
     inv playerStatusConsistent:
-        matchHistory->select(m | m.status = #INPROGRESS)->size() > 0 implies
-        status = #PLAYING
+        if matchHistory->any(m | m.status = #INPROGRESS) <> null then
+            status = #PLAYING
+        else
+            status <> #PLAYING
+        endif
 
     -- Can't play more than one match at a time
     inv onlyPlayingOneOrNoMatches:
         matchHistory->select(m | m.status = #INPROGRESS)->size() <= 1
-
-    -- Ensure correct rankings are always assigned
-    inv rankIsCorrect:
-        Player.allInstances->forAll(p | p <> self implies (
-            (p.rank.placement > rank.placement and p.score > score) or
-            (p.rank.placement = rank.placement and p.score = score) or
-            (p.rank.placement < rank.placement and p.score < score)))
 -- End Player Constraints
 
 context Chat
@@ -586,23 +574,39 @@ context Request
                 (r1.reqSender <> r2.reqRcvr and r1.reqSender <> r2.reqRcvr))
         )
 
-    -- For friend or message requests, there must not be any pending requests
-    -- between a given pair of players if there exists an accepted request
-    -- between them
-    inv noPendingFriendOrMsgRequestsIfAccepted:
-        let
-            frAndMsgReqs = Request.allInstances->select(req |
-                Set{#FRIEND, #MESSAGE}->includes(req.type)),
-            pending = frAndMsgReqs->select(req | req.status = #PENDING),
-            accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
-        in pending->forAll(p | accepted->forAll(a |
-            (p.reqSender <> a.reqSender and p.reqRcvr <> a.reqRcvr) or
-            (p.reqSender <> a.reqRcvr and p.reqSender <> a.reqRcvr)))
+    -- -- For friend or message requests, there must not be any pending requests
+    -- -- between a given pair of players if there exists an accepted request
+    -- -- between them
+    -- inv noPendingFriendOrMsgRequestsIfAccepted:
+    --     let
+    --         frAndMsgReqs = Request.allInstances->select(req |
+    --             Set{#FRIEND, #MESSAGE}->includes(req.type)),
+    --         pending = frAndMsgReqs->select(req | req.status = #PENDING),
+    --         accepted = frAndMsgReqs->select(req | req.status = #ACCEPTED)
+    --     in pending->forAll(p | accepted->forAll(a |
+    --         (p.reqSender <> a.reqSender and p.reqRcvr <> a.reqRcvr) or
+    --         (p.reqSender <> a.reqRcvr and p.reqSender <> a.reqRcvr)
+    --     ))
+
+    -- -- For a given pair or players, there may not be any pending or accepted
+    -- -- message requests between them if there exists an accepted friend
+    -- -- request between them
+    -- inv noMsgReqIfFriendReqAccepted:
+    --     let
+    --         frReqs = Request.allInstances->select(req | req.type = #FRIEND and
+    --             req.status = #ACCEPTED),
+    --         msgReqs = Request.allInstances->select(req |
+    --             req.type = #MESSAGE and
+    --             Set{#PENDING, #ACCEPTED}->includes(req.status))
+    --     in frReqs->forAll(f | msgReqs->forAll(m |
+    --         (f.reqSender <> m.reqSender and f.reqRcvr <> m.reqRcvr) or
+    --         (f.reqSender <> m.reqRcvr and f.reqSender <> m.reqRcvr)
+    --     ))
 -- End Request Constraints
 
 context MatchRequest
-    -- All message requests have the type #MESSAGE
-    inv matchReqTypeIsMsgReq: type = #MATCH
+    -- All match requests have the type #MATCH
+    inv matchReqTypeIsMatchReq: type = #MATCH
 
     -- Only accepted match requests may refer to a match
     inv noMatchUnlessAccepted:
@@ -1050,5 +1054,23 @@ context Match
 context Leaderboard
     -- Only one Leaderboard for the lifetime of the system
     inv onlyOneLeaderboardInstance: Leaderboard.allInstances->size() <= 1
+
+    -- All ranks are ordered
+    inv ranksAreAccurateAndOrdered:
+        rank->forAll(r |
+            let
+                i = rank->indexOf(r),
+                higherRanks = rank->subOrderedSet(1, i - 1)
+            in rank->first() <> r implies
+                higherRanks->forAll(upperR |
+                    (upperR.placement < r.placement and
+                        upperR.players.score > r.players.score) or
+                    (upperR.placement = r.placement and
+                        upperR.players.score = r.players.score)
+                ) and
+                higherRanks.placement->excludes(r.placement) implies
+                    r.placement = i
+        )
 -- End Leaderboard Constraints
+
 -- End All Constraints
