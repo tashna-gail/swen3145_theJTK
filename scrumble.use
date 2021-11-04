@@ -945,9 +945,9 @@ context Match
             player2 = playHistory->at(2).rack.players
         in playHistory->forAll(p |
             if playHistory->indexOf(p).mod(2) = 1 then
-                player1 = p
+                player1 = p.rack.players
             else
-                player2 = p
+                player2 = p.rack.players
             endif
         )
 
@@ -1068,7 +1068,7 @@ context Leaderboard
                     (upperR.placement = r.placement and
                         upperR.players.score = r.players.score)
                 ) and
-                higherRanks.placement->excludes(r.placement) implies
+                higherRanks.placement->asSet()->excludes(r.placement) implies
                     r.placement = i
         )
 -- End Leaderboard Constraints

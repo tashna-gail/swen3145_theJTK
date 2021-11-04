@@ -19,7 +19,7 @@ reset
 !player1.id := 'player1'
 !player1.username := 'TestUser1'
 !player1.email := 'test1@email.com'
-!player1.status := #ONLINE
+!player1.status := #PLAYING
 !player1.state := #PRIVATE
 !player1.score := 500
 
@@ -30,12 +30,12 @@ reset
 !player2.id := 'player2'
 !player2.username := 'TestUser2'
 !player2.email := 'test2@email.com'
-!player2.status := #ONLINE
+!player2.status := #PLAYING
 !player2.state := #PRIVATE
 !player2.score := 450
 
 !insert (lboard,player2) into Rank
-!Rank2.placement := 400
+!Rank2.placement := 2
 
 --------Friend Request between Players 1 and 2
 
