@@ -1,3 +1,16 @@
+------------------------------------------------------------------------------
+--! @authors: Jason Hunter, Kayvia Harriott, Tashna-Gail Williams
+--! Created on: 2021-11-02
+--! @version: 0.4
+--! Last Updated: 2021-11-04 16:35:24
+------------------------------------------------------------------------------
+
+-- PLEASE DON'T EDIT THIS FILE DIRECTLY, COPY AND PASTE IT AND WORK ON THAT
+-- WHEN TESTING. DON'T COMMIT YOUR CUSTOM TEST FILE DIRECTLY EITHER. IF YOU
+-- CREATED ANE NEW OBJECTS THAT COULD BE USEFUL FOR TESTING YOU MAY ADD THE
+-- CHANGES HERE BUT OTHERWISE THIS IS JUST A BASE FILE TO MAKE YOUR PERSONAL
+-- TESTS FROM
+
 reset
 
 !new Leaderboard('lboard')
