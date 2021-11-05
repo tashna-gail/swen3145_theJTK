@@ -16,6 +16,10 @@ enum RequestStatus {PENDING, ACCEPTED, REJECTED, RECINDED, LOST}
 enum MatchStatus {INPROGRESS, COMPLETE, ABANDONED}
 enum RequestType {FRIEND, MESSAGE, MATCH}
 enum BlockStatus {BLOCKED, UNBLOCKED}
+-- enum MessageStatus {SEEN, UNSEEN}
+-- enum ChatStatus {OPENED, CLOSED}
+-- enum NotificationType {CHAT, REQUEST, REMINDER}
+
 
 --! @TODO:
 --!     For these 2 I'm thinking to add a period class to represent the
@@ -29,8 +33,8 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --!     Add classes to handle game support (claim, claim status enum,
 --!         claims can be reporting players or bug reports)
 --!     Add attributes to represent the rest of the player's profile data
---!     add representations for message states (unseen, seen)
---!     add different types of notifications (As suggested from Ourvle QNA)
+--!     *add representations for message states (unseen, seen)
+--!     *add different types of notifications (As suggested from Ourvle QNA)
 --!
 --!     DESIGN PATTERN REFINEMENTS
 --!         Observer Pattern
@@ -190,6 +194,13 @@ operations
         dayAndMonthValid(d, m) and (m = 2 implies febValid(d, y))
 end -- Date Class
 
+-- class Time
+-- attributes
+--     hours: Integer
+--     minutes: Integer
+--     seconds: Integer
+-- end
+
 class Player < Identifiable
 attributes
     username: String
@@ -203,11 +214,22 @@ end -- Player Class
 class Message < Identifiable
 attributes
     message: String
-    date: Date --should be time
+    date: Date --should be time 
+    -- timestamp: Time
+    -- status: MessageStatus
 end -- Message Class
 
 class Chat
+-- attributes
+--     chatstatus: ChatStatus
+--     lastopened: Time or Date?
 end -- Chat Class
+
+-- class Notification
+-- attributes
+--     type: NotificationType
+--     deliverytime: Time
+-- end
 
 class Request < Identifiable
 attributes
