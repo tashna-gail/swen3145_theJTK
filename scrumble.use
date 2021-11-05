@@ -24,11 +24,7 @@ enum BlockStatus {BLOCKED, UNBLOCKED}
 --!     1. double check the date checking for valid match requests
 --!     2. accepted requests must not have a recinded date
 --!
---!     messages and requests must have a sent date
---!     match must be created if accepted
---!     add no ranked match requests/ only unranked match requests
 --!     not matched with blocked players
---!     no empty messages
 --!     players cant interact with themselves
 --!     Add classes to handle game support (claim, claim status enum,
 --!         claims can be reporting players or bug reports)
@@ -242,7 +238,7 @@ end -- Block Association Class
 associationclass Rack
 between
     Player[2] role players
-    Match[*] role matchHistory
+    Match[*] role matchHistory ordered
 end -- Rack Association Class
 
 class Play < Identifiable
@@ -442,6 +438,14 @@ context Player
     inv uniqueUsernames: Player.allInstances->forAll(p1, p2 |
         p1 <> p2 implies p1.username <> p2.username)
 
+    -- Matches must be ordered
+    inv matchesAreOrdered: matchHistory->forAll(m |
+        let
+            i = matchHistory->indexOf(m),
+            prevMatches = matchHistory->subOrderedSet(1, i - 1)
+        in matchHistory->first() <> m implies
+            prevMatches->forAll(prevM | prevM.date.before(m.date)))
+
     -- Blocked players can't be your friends
     inv notFriendAndBlocked:
         let
@@ -458,13 +462,18 @@ context Player
     inv noSelfRequests: sentReqs.reqRcvr->excludes(self)
 
     -- Can't exchange requests with blocked players
-    inv noRequestsAfterBlocked:
-        let
-            blocks = block[player]->select(b | b.status = #BLOCKED)
-        in blocks->forAll(b | sentReqs->union(rcvdReqs)->forAll(req |
-            (Set{req.reqSender, req.reqRcvr}->includes(b.blocked) and
-            req.sentDate.after(b.date)) implies req.status = #LOST
+    inv noRequestExchangeWithBlockedPlayers:
+        block[player]->select(b | b.status = #BLOCKED)->forAll(b |
+            sentReqs->union(rcvdReqs)->forAll(req |
+                (Set{req.reqSender, req.reqRcvr}->includes(b.blocked) and
+                req.sentDate.after(b.date)) implies req.status = #LOST
         ))
+
+    -- Players must not encounter players they have blocked in any match
+    inv noMatchesWithBlockedPlayers:
+        block[player]->select(b | b.status = #BLOCKED)->forAll(b |
+            not matchHistory->exists(m |
+                m.players->includes(b.blocked) and m.date.after(b.date)))
 
     -- There must not be any pending friend or message requests between a
     -- given pair of players if there exists an accepted request of the same
@@ -575,7 +584,18 @@ context Chat
             previousMsgs->forAll(prevM | prevM.date.before(m.date)))
 -- End Chat Constraints
 
+context Message
+    -- Each message must have a date
+    inv hasDate: date.oclIsKindOf(Date)
+
+    -- Messages must have a body
+    inv noEmptyMsgs: message.size() > 0
+-- End Message Constraints
+
 context Request
+    -- Each request must have a sent date
+    inv hasSentDate: sentDate.oclIsKindOf(Date)
+
     -- For each type of request, ther can only be one pending request between
     -- each unique pair of players.
     inv onlyOnePendingReqPerPlayerPair:
@@ -600,6 +620,9 @@ context MatchRequest
         else
             match->size() = 0
         endif
+
+    -- Players may not request ranked matches
+    inv noRankedMatchRequests: matchType <> #RANKED
 
     -- Accepted match type must match requested match type
     inv matchTypeMatchesRequestedMatchType: status = #ACCEPTED implies
@@ -906,6 +929,9 @@ context Dictionary
 -- End Dictionary Constraints
 
 context Match
+    -- Each match must have a date
+    inv hasDate: date.oclIsKindOf(Date)
+
     -- Only unranked matches may be untimed
     inv noUntimedRankedMatches: (type = #RANKED) implies timed
 
